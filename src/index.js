@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
 // Live Reload
@@ -23,11 +23,25 @@ const createWindow = () => {
     }
   });
 
+  mainWindow.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
+  mainWindow.webContents.session.setPermissionCheckHandler(async (webContents, permission, details) => {
+    return true
+  })
+  mainWindow.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
+    callback(true)
+  })
+
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, '../public/index.html'));
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  ipcMain.handle('test', async (evt, msg) => {
+    console.log(msg)
+    const srcs = await desktopCapturer.getSources()
+    return srcs
+  })
 };
 
 // This method will be called when Electron has finished
