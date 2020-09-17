@@ -46,6 +46,10 @@ var app = (function () {
     function space() {
         return text(' ');
     }
+    function listen(node, event, handler, options) {
+        node.addEventListener(event, handler, options);
+        return () => node.removeEventListener(event, handler, options);
+    }
     function attr(node, attribute, value) {
         if (value == null)
             node.removeAttribute(attribute);
@@ -54,6 +58,9 @@ var app = (function () {
     }
     function children(element) {
         return Array.from(element.childNodes);
+    }
+    function set_style(node, key, value, important) {
+        node.style.setProperty(key, value, important ? 'important' : '');
     }
     function custom_event(type, detail) {
         const e = document.createEvent('CustomEvent');
@@ -64,6 +71,14 @@ var app = (function () {
     let current_component;
     function set_current_component(component) {
         current_component = component;
+    }
+    function get_current_component() {
+        if (!current_component)
+            throw new Error(`Function called outside component initialization`);
+        return current_component;
+    }
+    function onMount(fn) {
+        get_current_component().$$.on_mount.push(fn);
     }
 
     const dirty_components = [];
@@ -136,6 +151,12 @@ var app = (function () {
             block.i(local);
         }
     }
+
+    const globals = (typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+            ? globalThis
+            : global);
     function mount_component(component, target, anchor) {
         const { fragment, on_mount, on_destroy, after_update } = component.$$;
         fragment && fragment.m(target, anchor);
@@ -270,19 +291,25 @@ var app = (function () {
         dispatch_dev("SvelteDOMRemove", { node });
         detach(node);
     }
+    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation) {
+        const modifiers = options === true ? ["capture"] : options ? Array.from(Object.keys(options)) : [];
+        if (has_prevent_default)
+            modifiers.push('preventDefault');
+        if (has_stop_propagation)
+            modifiers.push('stopPropagation');
+        dispatch_dev("SvelteDOMAddEventListener", { node, event, handler, modifiers });
+        const dispose = listen(node, event, handler, options);
+        return () => {
+            dispatch_dev("SvelteDOMRemoveEventListener", { node, event, handler, modifiers });
+            dispose();
+        };
+    }
     function attr_dev(node, attribute, value) {
         attr(node, attribute, value);
         if (value == null)
             dispatch_dev("SvelteDOMRemoveAttribute", { node, attribute });
         else
             dispatch_dev("SvelteDOMSetAttribute", { node, attribute, value });
-    }
-    function set_data_dev(text, data) {
-        data = '' + data;
-        if (text.wholeText === data)
-            return;
-        dispatch_dev("SvelteDOMSetData", { node: text, data });
-        text.data = data;
     }
     function validate_slots(name, slot, keys) {
         for (const slot_key of Object.keys(slot)) {
@@ -308,84 +335,501 @@ var app = (function () {
         $inject_state() { }
     }
 
+    const useWebRTC = (localVideo, remoteVideo, textForSendSdp, textToReceiveSdp) => {
+        let localStream = null;
+        let peerConnection = null;
+        let negotiationneededCounter = 0;
+        let remoteVideoStream = null;
+        const wsUrl = ' ws://192.168.0.4:3001/';
+        const ws = new WebSocket(wsUrl);
+        ws.onopen = (evt) => {
+            console.log(' ws open()');
+        };
+        ws.onerror = (err) => {
+            console.error(' ws onerror() ERR:', err);
+        };
+        ws.onmessage = (evt) => {
+            console.log(' ws onmessage() data:', evt.data);
+            const message = JSON.parse(evt.data);
+            switch (message.type) {
+                case 'offer': {
+                    console.log('Received offer ...');
+                    textToReceiveSdp.value = message.sdp;
+                    setOffer(message);
+                    break;
+                }
+                case 'answer': {
+                    console.log('Received answer ...');
+                    textToReceiveSdp.value = message.sdp;
+                    setAnswer(message);
+                    break;
+                }
+                case 'candidate': {
+                    console.log('Received ICE candidate ...');
+                    const candidate = new RTCIceCandidate(message.ice);
+                    console.log(candidate);
+                    addIceCandidate(candidate);
+                    break;
+                }
+                case 'close': {
+                    console.log('peer is closed ...');
+                    hangUp();
+                    break;
+                }
+                default: {
+                    console.log("Invalid message");
+                    break;
+                }
+            }
+        };
+        // ICE candaidate受信時にセットする
+        function addIceCandidate(candidate) {
+            if (peerConnection) {
+                peerConnection.addIceCandidate(candidate);
+            }
+            else {
+                console.error('PeerConnection not exist!');
+                return;
+            }
+        }
+        // ICE candidate生成時に送信する
+        function sendIceCandidate(candidate) {
+            console.log('---sending ICE candidate ---');
+            const message = JSON.stringify({ type: 'candidate', ice: candidate });
+            console.log('sending candidate=' + message);
+            ws.send(message);
+        }
+        // getUserMediaでカメラ、マイクにアクセス
+        async function startVideo() {
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                // localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+                if (localStream) {
+                    playVideo(localVideo, localStream);
+                }
+                else {
+                    console.error("localstream not found");
+                }
+            }
+            catch (err) {
+                console.error('mediaDevice.getUserMedia() error:', err);
+            }
+        }
+        // Videoの再生を開始する
+        async function playVideo(element, stream) {
+            console.log(element.srcObject);
+            element.srcObject = stream;
+            try {
+                await element.play();
+            }
+            catch (error) {
+                console.log('error auto play:' + error);
+            }
+        }
+        // WebRTCを利用する準備をする
+        function prepareNewConnection(isOffer) {
+            const peer = new RTCPeerConnection();
+            // リモートのMediStreamTrackを受信した時
+            peer.ontrack = evt => {
+                console.log('-- peer.ontrack()');
+                console.log(evt.streams);
+                remoteVideoStream = evt.streams[0];
+                // playVideo(remoteVideo, evt.streams[0]);
+            };
+            // ICE Candidateを収集したときのイベント
+            peer.onicecandidate = evt => {
+                if (evt.candidate) {
+                    console.log(evt.candidate);
+                    sendIceCandidate(evt.candidate);
+                }
+                else {
+                    console.log('empty ice event');
+                    // sendSdp(peer.localDescription);
+                }
+            };
+            // Offer側でネゴシエーションが必要になったときの処理
+            peer.onnegotiationneeded = async () => {
+                try {
+                    if (isOffer) {
+                        if (negotiationneededCounter === 0) {
+                            let offer = await peer.createOffer();
+                            console.log('createOffer() succsess in promise');
+                            await peer.setLocalDescription(offer);
+                            console.log('setLocalDescription() succsess in promise');
+                            sendSdp(peer.localDescription);
+                            negotiationneededCounter++;
+                        }
+                    }
+                }
+                catch (err) {
+                    console.error('setLocalDescription(offer) ERROR: ', err);
+                }
+            };
+            // ICEのステータスが変更になったときの処理
+            peer.oniceconnectionstatechange = function () {
+                console.log('ICE connection Status has changed to ' + peer.iceConnectionState);
+                switch (peer.iceConnectionState) {
+                    case 'closed':
+                    case 'failed':
+                        if (peerConnection) {
+                            hangUp();
+                        }
+                        break;
+                }
+            };
+            // ローカルのMediaStreamを利用できるようにする
+            if (localStream) {
+                console.log('Adding local stream...');
+                localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+            }
+            else {
+                console.warn('no local stream, but continue.');
+            }
+            return peer;
+        }
+        // 手動シグナリングのための処理を追加する
+        function sendSdp(sessionDescription) {
+            var _a;
+            console.log('---sending sdp ---');
+            textForSendSdp.value = (_a = sessionDescription === null || sessionDescription === void 0 ? void 0 : sessionDescription.sdp) !== null && _a !== void 0 ? _a : '';
+            /*---
+              textForSendSdp.focus();
+              textForSendSdp.select();
+            ----*/
+            const message = JSON.stringify(sessionDescription);
+            console.log('sending SDP=' + message);
+            ws.send(message);
+        }
+        // Connectボタンが押されたらWebRTCのOffer処理を開始
+        function connect() {
+            if (!peerConnection) {
+                console.log('make Offer');
+                peerConnection = prepareNewConnection(true);
+            }
+            else {
+                console.warn('peer already exist.');
+            }
+        }
+        // Answer SDPを生成する
+        async function makeAnswer() {
+            console.log('sending Answer. Creating remote session description...');
+            if (!peerConnection) {
+                console.error('peerConnection NOT exist!');
+                return;
+            }
+            try {
+                let answer = await peerConnection.createAnswer();
+                console.log('createAnswer() succsess in promise');
+                await peerConnection.setLocalDescription(answer);
+                console.log('setLocalDescription() succsess in promise');
+                sendSdp(peerConnection.localDescription);
+            }
+            catch (err) {
+                console.error(err);
+            }
+        }
+        // Receive remote SDPボタンが押されたらOffer側とAnswer側で処理を分岐
+        function onSdpText() {
+            const text = textToReceiveSdp.value;
+            if (peerConnection) {
+                console.log('Received answer text...');
+                const answer = new RTCSessionDescription({
+                    type: 'answer',
+                    sdp: text,
+                });
+                setAnswer(answer);
+            }
+            else {
+                console.log('Received offer text...');
+                const offer = new RTCSessionDescription({
+                    type: 'offer',
+                    sdp: text,
+                });
+                setOffer(offer);
+            }
+            textToReceiveSdp.value = '';
+        }
+        // Offer側のSDPをセットする処理
+        async function setOffer(sessionDescription) {
+            if (peerConnection) {
+                console.error('peerConnection alreay exist!');
+            }
+            peerConnection = prepareNewConnection(false);
+            try {
+                await peerConnection.setRemoteDescription(sessionDescription);
+                console.log('setRemoteDescription(answer) succsess in promise');
+                makeAnswer();
+            }
+            catch (err) {
+                console.error('setRemoteDescription(offer) ERROR: ', err);
+            }
+        }
+        // Answer側のSDPをセットする場合
+        async function setAnswer(sessionDescription) {
+            if (!peerConnection) {
+                console.error('peerConnection NOT exist!');
+                return;
+            }
+            try {
+                await peerConnection.setRemoteDescription(sessionDescription);
+                console.log('setRemoteDescription(answer) succsess in promise');
+            }
+            catch (err) {
+                console.error('setRemoteDescription(answer) ERROR: ', err);
+            }
+        }
+        // P2P通信を切断する
+        function hangUp() {
+            if (peerConnection) {
+                if (peerConnection.iceConnectionState !== 'closed') {
+                    peerConnection.close();
+                    peerConnection = null;
+                    negotiationneededCounter = 0;
+                    const message = JSON.stringify({ type: 'close' });
+                    console.log('sending close message');
+                    ws.send(message);
+                    cleanupVideoElement(remoteVideo);
+                    textForSendSdp.value = '';
+                    textToReceiveSdp.value = '';
+                    return;
+                }
+            }
+            console.log('peerConnection is closed.');
+        }
+        // ビデオエレメントを初期化する
+        function cleanupVideoElement(element) {
+            element.pause();
+            element.srcObject = null;
+        }
+        function playRemoteVideo() {
+            if (remoteVideoStream) {
+                playVideo(remoteVideo, remoteVideoStream);
+            }
+            else {
+                alert('not set remote video stream');
+            }
+        }
+        return {
+            startVideo,
+            hangUp,
+            connect,
+            onSdpText,
+            playRemoteVideo
+        };
+    };
+
     /* src\App.svelte generated by Svelte v3.25.1 */
 
+    const { console: console_1 } = globals;
     const file = "src\\App.svelte";
 
     function create_fragment(ctx) {
     	let main;
-    	let h1;
-    	let t0;
+    	let button0;
     	let t1;
-    	let t2;
+    	let button1;
     	let t3;
-    	let div0;
+    	let button2;
     	let t5;
-    	let div1;
-    	let t6;
+    	let button3;
     	let t7;
-    	let p;
+    	let div;
+    	let video0;
+    	let video0_muted_value;
     	let t8;
-    	let a_1;
+    	let video1;
+    	let t9;
+    	let p0;
     	let t10;
+    	let br0;
+    	let t11;
+    	let textarea0;
+    	let textarea0_readonly_value;
+    	let t12;
+    	let p1;
+    	let t13;
+    	let button4;
+    	let br1;
+    	let t15;
+    	let textarea1;
+    	let mounted;
+    	let dispose;
 
     	const block = {
     		c: function create() {
     			main = element("main");
-    			h1 = element("h1");
-    			t0 = text("Hello ");
-    			t1 = text(/*name*/ ctx[0]);
-    			t2 = text("!");
+    			button0 = element("button");
+    			button0.textContent = "Start Video";
+    			t1 = space();
+    			button1 = element("button");
+    			button1.textContent = "Connect";
     			t3 = space();
-    			div0 = element("div");
-    			div0.textContent = "aaaa";
+    			button2 = element("button");
+    			button2.textContent = "Hang Up";
     			t5 = space();
-    			div1 = element("div");
-    			t6 = text(/*a*/ ctx[1]);
+    			button3 = element("button");
+    			button3.textContent = "startRemote video";
     			t7 = space();
-    			p = element("p");
-    			t8 = text("Visit the ");
-    			a_1 = element("a");
-    			a_1.textContent = "Svelte tutorial";
-    			t10 = text(" to learn how to build Svelte apps.");
-    			attr_dev(h1, "class", "svelte-2x1evt");
-    			add_location(h1, file, 6, 1, 82);
-    			add_location(div0, file, 7, 1, 106);
-    			add_location(div1, file, 8, 1, 123);
-    			attr_dev(a_1, "href", "https://svelte.dev/tutorial");
-    			add_location(a_1, file, 9, 14, 152);
-    			add_location(p, file, 9, 1, 139);
+    			div = element("div");
+    			video0 = element("video");
+    			t8 = space();
+    			video1 = element("video");
+    			t9 = space();
+    			p0 = element("p");
+    			t10 = text("SDP to send:");
+    			br0 = element("br");
+    			t11 = space();
+    			textarea0 = element("textarea");
+    			t12 = space();
+    			p1 = element("p");
+    			t13 = text("SDP to receive:\n\t\t");
+    			button4 = element("button");
+    			button4.textContent = "Receive remote SDP";
+    			br1 = element("br");
+    			t15 = space();
+    			textarea1 = element("textarea");
+    			attr_dev(button0, "type", "button");
+    			add_location(button0, file, 28, 1, 730);
+    			attr_dev(button1, "type", "button");
+    			add_location(button1, file, 29, 1, 799);
+    			attr_dev(button2, "type", "button");
+    			add_location(button2, file, 30, 1, 861);
+    			attr_dev(button3, "type", "button");
+    			add_location(button3, file, 31, 1, 922);
+    			video0.autoplay = true;
+    			video0.muted = video0_muted_value = true;
+    			set_style(video0, "width", "160px");
+    			set_style(video0, "height", "120px");
+    			set_style(video0, "border", "1px solid black");
+    			add_location(video0, file, 33, 2, 1004);
+    			video1.autoplay = true;
+    			set_style(video1, "width", "160px");
+    			set_style(video1, "height", "120px");
+    			set_style(video1, "border", "1px solid black");
+    			add_location(video1, file, 34, 2, 1133);
+    			add_location(div, file, 32, 1, 996);
+    			add_location(br0, file, 36, 16, 1270);
+    			attr_dev(textarea0, "rows", "5");
+    			attr_dev(textarea0, "cols", "60");
+    			textarea0.readOnly = textarea0_readonly_value = true;
+    			textarea0.value = "SDP to send";
+    			add_location(textarea0, file, 37, 2, 1279);
+    			add_location(p0, file, 36, 1, 1255);
+    			attr_dev(button4, "type", "button");
+    			add_location(button4, file, 40, 2, 1406);
+    			add_location(br1, file, 40, 75, 1479);
+    			attr_dev(textarea1, "rows", "5");
+    			attr_dev(textarea1, "cols", "60");
+    			add_location(textarea1, file, 41, 2, 1488);
+    			add_location(p1, file, 39, 1, 1385);
     			attr_dev(main, "class", "svelte-2x1evt");
-    			add_location(main, file, 5, 0, 74);
+    			add_location(main, file, 27, 0, 722);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, main, anchor);
-    			append_dev(main, h1);
-    			append_dev(h1, t0);
-    			append_dev(h1, t1);
-    			append_dev(h1, t2);
+    			append_dev(main, button0);
+    			append_dev(main, t1);
+    			append_dev(main, button1);
     			append_dev(main, t3);
-    			append_dev(main, div0);
+    			append_dev(main, button2);
     			append_dev(main, t5);
-    			append_dev(main, div1);
-    			append_dev(div1, t6);
+    			append_dev(main, button3);
     			append_dev(main, t7);
-    			append_dev(main, p);
-    			append_dev(p, t8);
-    			append_dev(p, a_1);
-    			append_dev(p, t10);
+    			append_dev(main, div);
+    			append_dev(div, video0);
+    			/*video0_binding*/ ctx[9](video0);
+    			append_dev(div, t8);
+    			append_dev(div, video1);
+    			/*video1_binding*/ ctx[10](video1);
+    			append_dev(main, t9);
+    			append_dev(main, p0);
+    			append_dev(p0, t10);
+    			append_dev(p0, br0);
+    			append_dev(p0, t11);
+    			append_dev(p0, textarea0);
+    			/*textarea0_binding*/ ctx[11](textarea0);
+    			append_dev(main, t12);
+    			append_dev(main, p1);
+    			append_dev(p1, t13);
+    			append_dev(p1, button4);
+    			append_dev(p1, br1);
+    			append_dev(p1, t15);
+    			append_dev(p1, textarea1);
+    			/*textarea1_binding*/ ctx[12](textarea1);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(
+    						button0,
+    						"click",
+    						function () {
+    							if (is_function(/*startVideo1*/ ctx[4])) /*startVideo1*/ ctx[4].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(
+    						button1,
+    						"click",
+    						function () {
+    							if (is_function(/*connect1*/ ctx[5])) /*connect1*/ ctx[5].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(
+    						button2,
+    						"click",
+    						function () {
+    							if (is_function(/*hangUp1*/ ctx[6])) /*hangUp1*/ ctx[6].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(
+    						button3,
+    						"click",
+    						function () {
+    							if (is_function(/*playVideo1*/ ctx[8])) /*playVideo1*/ ctx[8].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(
+    						button4,
+    						"click",
+    						function () {
+    							if (is_function(/*onSdpText1*/ ctx[7])) /*onSdpText1*/ ctx[7].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					)
+    				];
+
+    				mounted = true;
+    			}
     		},
-    		p: function update(ctx, [dirty]) {
-    			if (dirty & /*name*/ 1) set_data_dev(t1, /*name*/ ctx[0]);
-    			if (dirty & /*a*/ 2) set_data_dev(t6, /*a*/ ctx[1]);
+    		p: function update(new_ctx, [dirty]) {
+    			ctx = new_ctx;
     		},
     		i: noop,
     		o: noop,
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(main);
+    			/*video0_binding*/ ctx[9](null);
+    			/*video1_binding*/ ctx[10](null);
+    			/*textarea0_binding*/ ctx[11](null);
+    			/*textarea1_binding*/ ctx[12](null);
+    			mounted = false;
+    			run_all(dispose);
     		}
     	};
 
@@ -403,37 +847,116 @@ var app = (function () {
     function instance($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("App", slots, []);
-    	let { name } = $$props;
-    	let a;
-    	a = "aaaaffffff";
-    	const writable_props = ["name"];
+    	let localVideo;
+    	let remoteVideo;
+    	let textForSendSdp;
+    	let textForReceiveSdp;
 
-    	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<App> was created with unknown prop '${key}'`);
+    	onMount(() => {
+    		try {
+    			navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    		} catch(err) {
+    			console.error(err);
+    		}
+
+    		const { startVideo, connect, hangUp, onSdpText, playRemoteVideo } = useWebRTC(localVideo, remoteVideo, textForSendSdp, textForReceiveSdp);
+    		$$invalidate(4, startVideo1 = startVideo);
+    		$$invalidate(5, connect1 = connect);
+    		$$invalidate(6, hangUp1 = hangUp);
+    		$$invalidate(7, onSdpText1 = onSdpText);
+    		$$invalidate(8, playVideo1 = playRemoteVideo);
     	});
 
-    	$$self.$$set = $$props => {
-    		if ("name" in $$props) $$invalidate(0, name = $$props.name);
-    	};
+    	let startVideo1;
+    	let connect1;
+    	let hangUp1;
+    	let onSdpText1;
+    	let playVideo1;
+    	const writable_props = [];
 
-    	$$self.$capture_state = () => ({ name, a });
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<App> was created with unknown prop '${key}'`);
+    	});
+
+    	function video0_binding($$value) {
+    		binding_callbacks[$$value ? "unshift" : "push"](() => {
+    			localVideo = $$value;
+    			$$invalidate(0, localVideo);
+    		});
+    	}
+
+    	function video1_binding($$value) {
+    		binding_callbacks[$$value ? "unshift" : "push"](() => {
+    			remoteVideo = $$value;
+    			$$invalidate(1, remoteVideo);
+    		});
+    	}
+
+    	function textarea0_binding($$value) {
+    		binding_callbacks[$$value ? "unshift" : "push"](() => {
+    			textForSendSdp = $$value;
+    			$$invalidate(2, textForSendSdp);
+    		});
+    	}
+
+    	function textarea1_binding($$value) {
+    		binding_callbacks[$$value ? "unshift" : "push"](() => {
+    			textForReceiveSdp = $$value;
+    			$$invalidate(3, textForReceiveSdp);
+    		});
+    	}
+
+    	$$self.$capture_state = () => ({
+    		onMount,
+    		useWebRTC,
+    		localVideo,
+    		remoteVideo,
+    		textForSendSdp,
+    		textForReceiveSdp,
+    		startVideo1,
+    		connect1,
+    		hangUp1,
+    		onSdpText1,
+    		playVideo1
+    	});
 
     	$$self.$inject_state = $$props => {
-    		if ("name" in $$props) $$invalidate(0, name = $$props.name);
-    		if ("a" in $$props) $$invalidate(1, a = $$props.a);
+    		if ("localVideo" in $$props) $$invalidate(0, localVideo = $$props.localVideo);
+    		if ("remoteVideo" in $$props) $$invalidate(1, remoteVideo = $$props.remoteVideo);
+    		if ("textForSendSdp" in $$props) $$invalidate(2, textForSendSdp = $$props.textForSendSdp);
+    		if ("textForReceiveSdp" in $$props) $$invalidate(3, textForReceiveSdp = $$props.textForReceiveSdp);
+    		if ("startVideo1" in $$props) $$invalidate(4, startVideo1 = $$props.startVideo1);
+    		if ("connect1" in $$props) $$invalidate(5, connect1 = $$props.connect1);
+    		if ("hangUp1" in $$props) $$invalidate(6, hangUp1 = $$props.hangUp1);
+    		if ("onSdpText1" in $$props) $$invalidate(7, onSdpText1 = $$props.onSdpText1);
+    		if ("playVideo1" in $$props) $$invalidate(8, playVideo1 = $$props.playVideo1);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [name, a];
+    	return [
+    		localVideo,
+    		remoteVideo,
+    		textForSendSdp,
+    		textForReceiveSdp,
+    		startVideo1,
+    		connect1,
+    		hangUp1,
+    		onSdpText1,
+    		playVideo1,
+    		video0_binding,
+    		video1_binding,
+    		textarea0_binding,
+    		textarea1_binding
+    	];
     }
 
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance, create_fragment, safe_not_equal, { name: 0 });
+    		init(this, options, instance, create_fragment, safe_not_equal, {});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -441,30 +964,13 @@ var app = (function () {
     			options,
     			id: create_fragment.name
     		});
-
-    		const { ctx } = this.$$;
-    		const props = options.props || {};
-
-    		if (/*name*/ ctx[0] === undefined && !("name" in props)) {
-    			console.warn("<App> was created without expected prop 'name'");
-    		}
-    	}
-
-    	get name() {
-    		throw new Error("<App>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set name(value) {
-    		throw new Error("<App>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
 
     const app = new App({
-        target: document.body,
-        props: {
-            name: 'world'
-        }
+        target: document.body
     });
+    //# sourceMappingURL=svelte.js.map
 
     return app;
 
