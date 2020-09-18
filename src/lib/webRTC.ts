@@ -1,34 +1,37 @@
 import type { Setting } from '../@types/Original'
 
-const useWebRTC = () => {
-  let localStream: null | MediaStream = null;
-  let peerConnection: null | RTCPeerConnection = null;
+let isOffer = false;
+
+const useWebRTC = (
+  remoteVideo: HTMLMediaElement | undefined
+) => {
   let negotiationneededCounter = 0;
-  let remoteVideoStream: null | MediaStream = null
+  let localStream: null | MediaStream = null;
+  let remoteStream: null | MediaStream = null;
+  let peerConnection: null | RTCPeerConnection = null;
   let ws: WebSocket | null = null
   const setupWS = (setting: Setting) => {
     const wsUrl = `ws://${setting.privateIP}:${setting.browserPort + 1}/`;
-    console.log(wsUrl)
     ws = new WebSocket(wsUrl);
     ws.onopen = (evt) => {
-      console.log(' ws open()');
+      console.log('ws open()');
     };
     ws.onerror = (err) => {
-      console.error(' ws onerror() ERR:', err);
+      console.error('ws onerror() ERR:', err);
     };
     ws.onmessage = (evt) => {
-      console.log(' ws onmessage() data:', evt.data);
+      console.log('ws onmessage() data:', evt.data);
       const message = JSON.parse(evt.data);
       switch(message.type){
         case 'offer': {
           console.log('Received offer ...');
-          console.log(message.sdp)
+          // textToReceiveSdp.value = message.sdp;
           setOffer(message);
           break;
         }
         case 'answer': {
           console.log('Received answer ...');
-          console.log(message.sdp)
+          // textToReceiveSdp.value = message.sdp;
           setAnswer(message);
           break;
         }
@@ -51,9 +54,8 @@ const useWebRTC = () => {
       }
     };
   }
-
   // ICE candaidate受信時にセットする
-  function addIceCandidate(candidate: RTCIceCandidate) {
+  function addIceCandidate(candidate: RTCIceCandidate | RTCIceCandidateInit) {
     if (peerConnection) {
       peerConnection.addIceCandidate(candidate);
     }
@@ -64,28 +66,17 @@ const useWebRTC = () => {
   }
 
   // ICE candidate生成時に送信する
-  function sendIceCandidate(candidate: RTCIceCandidate) {
+  function sendIceCandidate(candidate: RTCIceCandidate | RTCIceCandidateInit) {
     console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
     console.log('sending candidate=' + message);
-    ws?.send(message);
-  }
-
-  // getUserMediaでカメラ、マイクにアクセス
-  async function startVideo(localVideo: HTMLMediaElement) {
-    try{
-      localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-      // localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
-      if (localStream) {
-        playVideo(localVideo, localStream);
-      } else {
-        console.error("localstream not found")
-      }
-    } catch(err){
-      console.error('mediaDevice.getUserMedia() error:', err);
+    if (!ws) {
+      console.error('ws is null !!!!!')
+      return
     }
+    ws.send(message);
   }
-
+  // getUserMediaでカメラ、マイクにアクセス
   const setStreamByID = async (id: string, localVideo: HTMLMediaElement) => {
     const stream = await window.navigator.mediaDevices.getUserMedia({
       audio: {
@@ -102,31 +93,31 @@ const useWebRTC = () => {
     })
     localStream = stream
     console.log('setted localStream: ', localStream)
-    playVideo(localVideo, stream)
+    await playVideo(localVideo, stream)
   }
-
   // Videoの再生を開始する
-  async function playVideo(element : HTMLMediaElement, stream: MediaStream) {
-    console.log(element.srcObject)
+  async function playVideo(element: HTMLMediaElement, stream: MediaStream) {
     element.srcObject = stream;
     try {
       await element.play();
     } catch(error) {
-      console.error('error auto play:' + error);
+      console.log('error auto play:' + error);
     }
   }
-
   // WebRTCを利用する準備をする
   function prepareNewConnection(isOffer: boolean) {
     const pc_config = {"iceServers":[ {"urls":"stun:stun.webrtc.ecl.ntt.com:3478"} ]};
-    const peer = new RTCPeerConnection();
+    const peer = new RTCPeerConnection(pc_config);
 
     // リモートのMediStreamTrackを受信した時
     peer.ontrack = evt => {
       console.log('-- peer.ontrack()');
-      console.log(evt.streams)
-      remoteVideoStream = evt.streams[0]
-      // playVideo(remoteVideo, evt.streams[0]);
+      if (evt.streams.length > 0 && remoteVideo) {
+        remoteStream = evt.streams[0]
+        playVideo(remoteVideo, evt.streams[0]);
+      } else {
+        console.error('ERR stream length === 0 || remoteVideo === undefind')
+      }
     };
 
     // ICE Candidateを収集したときのイベント
@@ -136,7 +127,6 @@ const useWebRTC = () => {
         sendIceCandidate(evt.candidate);            
       } else {
         console.log('empty ice event');
-        // sendSdp(peer.localDescription);
       }
     };
 
@@ -149,7 +139,11 @@ const useWebRTC = () => {
             console.log('createOffer() succsess in promise');
             await peer.setLocalDescription(offer);
             console.log('setLocalDescription() succsess in promise');
-            sendSdp(peer.localDescription);
+            if (peer.localDescription) {
+              sendSdp(peer.localDescription);
+            } else {
+              console.error('peer.localDescription is NULL !!!!')
+            }
             negotiationneededCounter++;
           }
         }
@@ -173,7 +167,6 @@ const useWebRTC = () => {
       }
     };
 
-    console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
     if (localStream) {
       console.log('Adding local stream...');
@@ -184,23 +177,20 @@ const useWebRTC = () => {
 
     return peer;
   }
-
   // 手動シグナリングのための処理を追加する
-  function sendSdp(sessionDescription: RTCSessionDescription | null) {
+  function sendSdp(sessionDescription: RTCSessionDescription) {
     console.log('---sending sdp ---');
-    // textForSendSdp.value = sessionDescription?.sdp ?? '';
-    /*---
-      textForSendSdp.focus();
-      textForSendSdp.select();
-    ----*/
     const message = JSON.stringify(sessionDescription);
     console.log('sending SDP=' + message);
-    ws?.send(message);     
+    if (!ws) {
+      console.error('ws is null !!!!!')
+      return
+    }
+    ws.send(message);     
   }
-
   // Connectボタンが押されたらWebRTCのOffer処理を開始
   function connect() {
-    if (! peerConnection) {
+    if (!peerConnection) {
       console.log('make Offer');
       peerConnection = prepareNewConnection(true);
     }
@@ -208,11 +198,10 @@ const useWebRTC = () => {
       console.warn('peer already exist.');
     }
   }
-
   // Answer SDPを生成する
   async function makeAnswer() {
     console.log('sending Answer. Creating remote session description...' );
-    if (! peerConnection) {
+    if (!peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
     }
@@ -221,32 +210,14 @@ const useWebRTC = () => {
       console.log('createAnswer() succsess in promise');
       await peerConnection.setLocalDescription(answer);
       console.log('setLocalDescription() succsess in promise');
-      sendSdp(peerConnection.localDescription);
+      if (peerConnection.localDescription) {
+        sendSdp(peerConnection.localDescription);
+      } else {
+        console.error('peerConnection.localDescription is NULL !!!!')
+      }
     } catch(err){
       console.error(err);
     }
-  }
-
-  // Receive remote SDPボタンが押されたらOffer側とAnswer側で処理を分岐
-  function onSdpText(textToReceiveSdp: HTMLTextAreaElement) {
-    const text = textToReceiveSdp.value;
-    if (peerConnection) {
-      console.log('Received answer text...');
-      const answer = new RTCSessionDescription({
-        type : 'answer',
-        sdp : text,
-      });
-      setAnswer(answer);
-    }
-    else {
-      console.log('Received offer text...');
-      const offer = new RTCSessionDescription({
-        type : 'offer',
-        sdp : text,
-      });
-      setOffer(offer);
-    }
-    textToReceiveSdp.value ='';
   }
 
   // Offer側のSDPをセットする処理
@@ -263,7 +234,7 @@ const useWebRTC = () => {
       console.error('setRemoteDescription(offer) ERROR: ', err);
     }
   }
-  
+
   // Answer側のSDPをセットする場合
   async function setAnswer(sessionDescription: RTCSessionDescription) {
     if (! peerConnection) {
@@ -277,7 +248,7 @@ const useWebRTC = () => {
       console.error('setRemoteDescription(answer) ERROR: ', err);
     }
   }
-
+  
   // P2P通信を切断する
   function hangUp(){
     if (peerConnection) {
@@ -287,34 +258,30 @@ const useWebRTC = () => {
         negotiationneededCounter = 0;
         const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
-        ws?.send(message);
-        remoteVideoStream = null
+        if (!ws) {
+          console.error('ws is null !!!!!')
+          return
+        }
+        ws.send(message);
+        if (remoteVideo) {
+          cleanupVideoElement(remoteVideo);
+        }
         return;
       }
     }
     console.log('peerConnection is closed.');
   }
-
+  
   // ビデオエレメントを初期化する
   function cleanupVideoElement(element: HTMLMediaElement) {
     element.pause();
     element.srcObject = null;
   }
-
-  function playRemoteVideo(remoteVideo: HTMLMediaElement) {
-    if (remoteVideoStream) {
-      playVideo(remoteVideo, remoteVideoStream)
-    } else {
-      alert('not set remote video stream')
-    }
-  }
   return {
-    setupWS,
     setStreamByID,
-    startVideo,
-    hangUp,
+    setupWS,
     connect,
-    playRemoteVideo
+    hangUp
   }
 }
 

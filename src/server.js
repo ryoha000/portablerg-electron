@@ -10,9 +10,9 @@ module.exports.setupWebSocketServer = (port) => {
     ws.on('message', function(message) {
       wsServer.clients.forEach(function each(client) {
         if (isSame(ws, client)) {
-          console.log('- skip sender -');
-        }
-        else {
+          return
+          // console.log('- skip sender -');
+        } else {
           client.send(message);
         }
       });

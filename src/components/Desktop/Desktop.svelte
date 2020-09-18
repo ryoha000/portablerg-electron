@@ -10,7 +10,6 @@
 	import type { Setting } from '../../@types/Original'
 
 	let localVideo: HTMLVideoElement
-	let remoteVideo: HTMLVideoElement
 	let id: string
 	let name: string
 	let setting: Setting | null = null
@@ -26,9 +25,8 @@
 	const {
 		setupWS,
 		setStreamByID,
-		connect,
 		hangUp
-	} = useWebRTC()
+	} = useWebRTC(undefined)
 	const setStream = () => {
 		setStreamByID(id, localVideo)
 	}
@@ -86,10 +84,8 @@
 		{/if}
 	</ColumnTemplate>
   <button type="button" on:click="{setStream}">Start Video</button>
-  <button type="button" on:click="{connect}">Connect</button>
   <button type="button" on:click="{hangUp}">Hang Up</button>
   <div>
     <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
-    <video bind:this="{remoteVideo}" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
 	</div>
 </div>
