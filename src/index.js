@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require('electron');
 const path = require('path');
 
 // Live Reload
@@ -37,10 +37,18 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
-  ipcMain.handle('test', async (evt, msg) => {
-    console.log(msg)
-    const srcs = await desktopCapturer.getSources()
-    return srcs
+  let dialog
+  ipcMain.handle('openDialog', (e) => {
+    dialog = new BrowserWindow({ parent: mainWindow, modal: true, show: false, webPreferences: { nodeIntegration: true }, useContentSize: true })
+    dialog.loadFile(path.join(__dirname, '../public/index.html'));
+    dialog.webContents.openDevTools()
+    dialog.show('ready-to-show', () => dialog.show())
+    return
+  })
+  ipcMain.handle('decideWindow', (e, id, name) => {
+    mainWindow.webContents.send('id', id, name)
+    dialog.hide()
+    return
   })
 };
 
