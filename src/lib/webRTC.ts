@@ -1,55 +1,56 @@
-const useWebRTC = (
-  localVideo: HTMLMediaElement,
-  remoteVideo: HTMLMediaElement,
-  textForSendSdp: HTMLTextAreaElement,
-  textToReceiveSdp: HTMLTextAreaElement,
-) => {
+import type { Setting } from '../@types/Original'
+
+const useWebRTC = () => {
   let localStream: null | MediaStream = null;
   let peerConnection: null | RTCPeerConnection = null;
   let negotiationneededCounter = 0;
   let remoteVideoStream: null | MediaStream = null
-  const wsUrl = ' ws://192.168.0.4:3001/';
-  const ws = new WebSocket( wsUrl);
-  ws.onopen = (evt) => {
-    console.log(' ws open()');
-  };
-  ws.onerror = (err) => {
-    console.error(' ws onerror() ERR:', err);
-  };
-  ws.onmessage = (evt) => {
-    console.log(' ws onmessage() data:', evt.data);
-    const message = JSON.parse(evt.data);
-    switch(message.type){
-      case 'offer': {
-        console.log('Received offer ...');
-        textToReceiveSdp.value = message.sdp;
-        setOffer(message);
-        break;
+  let ws: WebSocket | null = null
+  const setupWS = (setting: Setting) => {
+    const wsUrl = `ws://${setting.privateIP}:${setting.browserPort + 1}/`;
+    console.log(wsUrl)
+    ws = new WebSocket(wsUrl);
+    ws.onopen = (evt) => {
+      console.log(' ws open()');
+    };
+    ws.onerror = (err) => {
+      console.error(' ws onerror() ERR:', err);
+    };
+    ws.onmessage = (evt) => {
+      console.log(' ws onmessage() data:', evt.data);
+      const message = JSON.parse(evt.data);
+      switch(message.type){
+        case 'offer': {
+          console.log('Received offer ...');
+          console.log(message.sdp)
+          setOffer(message);
+          break;
+        }
+        case 'answer': {
+          console.log('Received answer ...');
+          console.log(message.sdp)
+          setAnswer(message);
+          break;
+        }
+        case 'candidate': {
+          console.log('Received ICE candidate ...');
+          const candidate = new RTCIceCandidate(message.ice);
+          console.log(candidate);
+          addIceCandidate(candidate);
+          break;
+        }
+        case 'close': {
+          console.log('peer is closed ...');
+          hangUp();
+          break;
+        }      
+        default: { 
+          console.log("Invalid message"); 
+          break;              
+        }         
       }
-      case 'answer': {
-        console.log('Received answer ...');
-        textToReceiveSdp.value = message.sdp;
-        setAnswer(message);
-        break;
-      }
-      case 'candidate': {
-        console.log('Received ICE candidate ...');
-        const candidate = new RTCIceCandidate(message.ice);
-        console.log(candidate);
-        addIceCandidate(candidate);
-        break;
-      }
-      case 'close': {
-        console.log('peer is closed ...');
-        hangUp();
-        break;
-      }      
-      default: { 
-        console.log("Invalid message"); 
-        break;              
-      }         
-    }
-  };
+    };
+  }
 
   // ICE candaidate受信時にセットする
   function addIceCandidate(candidate: RTCIceCandidate) {
@@ -67,11 +68,11 @@ const useWebRTC = (
     console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
     console.log('sending candidate=' + message);
-    ws.send(message);
+    ws?.send(message);
   }
 
   // getUserMediaでカメラ、マイクにアクセス
-  async function startVideo() {
+  async function startVideo(localVideo: HTMLMediaElement) {
     try{
       localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
       // localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
@@ -85,6 +86,25 @@ const useWebRTC = (
     }
   }
 
+  const setStreamByID = async (id: string, localVideo: HTMLMediaElement) => {
+    const stream = await window.navigator.mediaDevices.getUserMedia({
+      audio: {
+        mandatory: {
+          chromeMediaSource: 'desktop'
+        }
+      },
+      video: {
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: id
+        }
+      }
+    })
+    localStream = stream
+    console.log('setted localStream: ', localStream)
+    playVideo(localVideo, stream)
+  }
+
   // Videoの再生を開始する
   async function playVideo(element : HTMLMediaElement, stream: MediaStream) {
     console.log(element.srcObject)
@@ -92,7 +112,7 @@ const useWebRTC = (
     try {
       await element.play();
     } catch(error) {
-      console.log('error auto play:' + error);
+      console.error('error auto play:' + error);
     }
   }
 
@@ -153,6 +173,7 @@ const useWebRTC = (
       }
     };
 
+    console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
     if (localStream) {
       console.log('Adding local stream...');
@@ -167,14 +188,14 @@ const useWebRTC = (
   // 手動シグナリングのための処理を追加する
   function sendSdp(sessionDescription: RTCSessionDescription | null) {
     console.log('---sending sdp ---');
-    textForSendSdp.value = sessionDescription?.sdp ?? '';
+    // textForSendSdp.value = sessionDescription?.sdp ?? '';
     /*---
       textForSendSdp.focus();
       textForSendSdp.select();
     ----*/
     const message = JSON.stringify(sessionDescription);
     console.log('sending SDP=' + message);
-    ws.send(message);     
+    ws?.send(message);     
   }
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
@@ -207,7 +228,7 @@ const useWebRTC = (
   }
 
   // Receive remote SDPボタンが押されたらOffer側とAnswer側で処理を分岐
-  function onSdpText() {
+  function onSdpText(textToReceiveSdp: HTMLTextAreaElement) {
     const text = textToReceiveSdp.value;
     if (peerConnection) {
       console.log('Received answer text...');
@@ -266,10 +287,8 @@ const useWebRTC = (
         negotiationneededCounter = 0;
         const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
-        ws.send(message);
-        cleanupVideoElement(remoteVideo);
-        textForSendSdp.value = '';
-        textToReceiveSdp.value = '';
+        ws?.send(message);
+        remoteVideoStream = null
         return;
       }
     }
@@ -282,7 +301,7 @@ const useWebRTC = (
     element.srcObject = null;
   }
 
-  function playRemoteVideo() {
+  function playRemoteVideo(remoteVideo: HTMLMediaElement) {
     if (remoteVideoStream) {
       playVideo(remoteVideo, remoteVideoStream)
     } else {
@@ -290,10 +309,11 @@ const useWebRTC = (
     }
   }
   return {
+    setupWS,
+    setStreamByID,
     startVideo,
     hangUp,
     connect,
-    onSdpText,
     playRemoteVideo
   }
 }
