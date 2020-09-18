@@ -1,29 +1,32 @@
 <script lang="ts">
-	import Router, { link } from 'svelte-spa-router'
-	import Desktop from './Desktop/Desktop.svelte'
-	import Tablet from './Tablet/Tablet.svelte'
+	import { onMount } from 'svelte';
+	import Router, { link, push } from 'svelte-spa-router'
+	import Desktop from './components/Desktop/Desktop.svelte'
+	import Select from './components/Desktop/SelectWindowDialog.svelte'
+	import Tablet from './components/Tablet/Tablet.svelte'
+
 	const routes = {
-    '/desktop': Desktop,
+		'/': Desktop,
+		'/select': Select,
     '/client': Tablet,
 	}
+	onMount(() => {
+		if (window.innerWidth === 800) {
+			push('/select')
+		}
+	})
 </script>
 
 <main>
-	<div>aaa</div>
-	<a href="/desktop" use:link>desktop</a>
+	<a href="/" use:link>desktop</a>
+	<a href="/client" use:link>client</a>
+	<a href="/select" use:link>select</a>
 	<Router {routes} />
 </main>
 
 <style>
 	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
 		margin: 0 auto;
-	}
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
+		min-width: 100%;
 	}
 </style>
