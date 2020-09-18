@@ -2,13 +2,10 @@
   import { onMount } from 'svelte';
   import SelectWindowDialogItem from './SelectWindowDialogItem.svelte'
   import useWindow from './useWindow'
-  import { decideWindow } from '../renderLogic'
+  import { decideWindow } from '../../renderLogic'
 
   let candidates: Electron.DesktopCapturerSource[] = []
-  let selected: string = ''
   const select = (e: CustomEvent<{ id: string, name: string }>) => {
-    console.log(e.detail.id)
-    selected = e.detail.id
     decideWindow(e.detail.id, e.detail.name)
   }
   onMount(async () => {
