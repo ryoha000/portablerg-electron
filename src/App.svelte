@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Router, { link, push } from 'svelte-spa-router'
+	const Router = require('svelte-spa-router')
+	const { link, push } = require('svelte-spa-router')
 	import Desktop from './components/Desktop/Desktop.svelte'
 	import Select from './components/Desktop/SelectWindowDialog.svelte'
 	import Tablet from './components/Tablet/Tablet.svelte'

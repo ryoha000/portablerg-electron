@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-
   export let label: string
   export let color: string = 'rgb(0, 0, 0)'
 </script>
