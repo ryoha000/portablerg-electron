@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require('electron');
 const path = require('path');
+const { setupWebSocketServer, setupClientServer } = require('./server')
+const { getPrivateIP, removePrevFireWall, addNewFireWall, getSetting, updateSetting, resetSetting } = require('./ipcHandlers')
 
 // Live Reload
 require('electron-reload')(__dirname, {
@@ -13,7 +15,10 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-const createWindow = () => {
+const createWindow = async () => {
+  const setting = await getSetting()
+  setupClientServer(setting.browserPort)
+  setupWebSocketServer(setting.browserPort + 1)
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -48,6 +53,30 @@ const createWindow = () => {
   ipcMain.handle('decideWindow', (e, id, name) => {
     mainWindow.webContents.send('id', id, name)
     dialog.hide()
+    return
+  })
+  ipcMain.handle('getPrivateIP', (e) => {
+    const ip = getPrivateIP()
+    return ip
+  })
+  ipcMain.handle('removePrevFireWall', (e, addr, port) => {
+    removePrevFireWall(addr, port)
+    return
+  })
+  ipcMain.handle('addNewFireWall', (e, addr, port) => {
+    addNewFireWall(addr, port)
+    return
+  })
+  ipcMain.handle('getSetting', async (e, addr, port) => {
+    const setting = await getSetting(addr, port)
+    return setting
+  })
+  ipcMain.handle('updateSetting', async (e, newSetting) => {
+    await updateSetting(newSetting)
+    return
+  })
+  ipcMain.handle('resetSetting', async (e) => {
+    await resetSetting()
     return
   })
 };
