@@ -7,7 +7,8 @@ import { onMount } from 'svelte';
   const {
     hangUp,
     setupWS,
-    playRemoteVideo
+    playRemoteVideo,
+    sendMouseMove
   } = useWebRTC()
   onMount(() => {
     setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
@@ -20,6 +21,7 @@ import { onMount } from 'svelte';
 <div>
   <button type="button" on:click="{hangUp}">Hang Up</button>
   <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
+  <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
   <div>
     <video bind:this="{remoteVideo}" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
 	</div>

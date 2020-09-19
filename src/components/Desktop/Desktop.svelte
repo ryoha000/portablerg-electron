@@ -16,7 +16,8 @@
 	let setting: Setting | null = null
 	onMount(async () => {
 		try {
-			listenID((i: string, n: string) => { id = i; name = n })
+			listenID((i: string, n: string) => { id = i; name = n;})
+			// listenID((i: string, n: string) => { id = i; name = n; setStreamByID(i, localVideo) })
 			setting = await getSetting()
 			setupWS(setting)
 		} catch (e) {

@@ -6,6 +6,7 @@ const useWebRTC = () => {
   let negotiationneededCounter = 0;
   let remoteVideoStream: null | MediaStream = null
   let ws: WebSocket | null = null
+  let mouseMoveChannel: RTCDataChannel | null = null
   const setupWS = (setting: Setting) => {
     const wsUrl = `ws://${setting.privateIP}:${setting.browserPort + 1}/`;
     console.log(wsUrl)
@@ -172,6 +173,19 @@ const useWebRTC = () => {
           break;
       }
     };
+    // mouseMoveChannel = peer.createDataChannel('mouseMove')
+    // mouseMoveChannel.onmessage = function (event) {
+    //   console.log("データチャネルメッセージ取得:", event.data);
+    // };
+    
+    // mouseMoveChannel.onopen = function () {
+    //   // mouseMoveChannel?.send(new Blob([JSON.stringify({ x: 0, y: -10 })], { type: 'text/plain' }));
+    //   mouseMoveChannel?.send(JSON.stringify({ x: 0, y: -10 }));
+    // };
+    
+    // mouseMoveChannel.onclose = function () {
+    //   console.log("データチャネルのクローズ");
+    // };
 
     console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
@@ -308,13 +322,18 @@ const useWebRTC = () => {
       alert('not set remote video stream')
     }
   }
+
+  function sendMouseMove(dPoint: { x: number, y: number }) {
+    // mouseMoveChannel?.send(new Blob([ JSON.stringify(dPoint) ], { type: 'text/plain' }))
+  }
   return {
     setupWS,
     setStreamByID,
     startVideo,
     hangUp,
     connect,
-    playRemoteVideo
+    playRemoteVideo,
+    sendMouseMove
   }
 }
 
