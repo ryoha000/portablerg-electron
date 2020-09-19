@@ -1,4 +1,4 @@
-<script lang="ts">
+<script>
 	import { onMount } from 'svelte';
 	import Router, { link, push } from 'svelte-spa-router'
 	// const Router = require('svelte-spa-router')

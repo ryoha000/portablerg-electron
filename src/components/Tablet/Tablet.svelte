@@ -8,10 +8,15 @@ import { onMount } from 'svelte';
     hangUp,
     setupWS,
     playRemoteVideo,
-    sendMouseMove
+    sendMouseMove,
+    connect
   } = useWebRTC()
   onMount(() => {
-    setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
+    } else {
+      setupWS({ privateIP: location.hostname, browserPort: 2401 })
+    }
   })
 </script>
 
@@ -19,6 +24,7 @@ import { onMount } from 'svelte';
 
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
+  <button type="button" on:click="{connect}">Connect</button>
   <button type="button" on:click="{hangUp}">Hang Up</button>
   <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
   <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>

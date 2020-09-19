@@ -62,12 +62,14 @@
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
 	<ColumnTemplate label="端末側URL">
-		<div class="flexContainer">
-			<div class="clickable" on:click="{() => copy(`http://${setting?.privateIP}:${setting?.browserPort}/#/client`)}">
-				<Icon name="content-copy" />
+		{#if setting}
+			<div class="flexContainer">
+				<div class="clickable" on:click="{() => copy(`http://${setting?.privateIP}:${setting?.browserPort}/#/client`)}">
+					<Icon name="content-copy" />
+				</div>
+				<div>{`http://${setting?.privateIP}:${setting?.browserPort}/#/client`}</div>
 			</div>
-			<div>http://192.164.0.4:5000/#/client</div>
-		</div>
+		{/if}
 	</ColumnTemplate>
 	<ColumnTemplate label="Windowの選択">
 		<div>現在: {name ?? '未選択'}</div>

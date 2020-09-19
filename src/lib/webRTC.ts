@@ -173,19 +173,19 @@ const useWebRTC = () => {
           break;
       }
     };
-    // mouseMoveChannel = peer.createDataChannel('mouseMove')
-    // mouseMoveChannel.onmessage = function (event) {
-    //   console.log("データチャネルメッセージ取得:", event.data);
-    // };
+    mouseMoveChannel = peer.createDataChannel('mouseMove')
+    mouseMoveChannel.onmessage = function (event) {
+      console.log("データチャネルメッセージ取得:", event.data);
+    };
     
-    // mouseMoveChannel.onopen = function () {
-    //   // mouseMoveChannel?.send(new Blob([JSON.stringify({ x: 0, y: -10 })], { type: 'text/plain' }));
-    //   mouseMoveChannel?.send(JSON.stringify({ x: 0, y: -10 }));
-    // };
+    mouseMoveChannel.onopen = function () {
+      // mouseMoveChannel?.send(new Blob([JSON.stringify({ x: 0, y: -10 })], { type: 'text/plain' }));
+      mouseMoveChannel?.send(JSON.stringify({ x: 0, y: -10 }));
+    };
     
-    // mouseMoveChannel.onclose = function () {
-    //   console.log("データチャネルのクローズ");
-    // };
+    mouseMoveChannel.onclose = function () {
+      console.log("データチャネルのクローズ");
+    };
 
     console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
@@ -214,7 +214,7 @@ const useWebRTC = () => {
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
   function connect() {
-    if (! peerConnection) {
+    if (!peerConnection) {
       console.log('make Offer');
       peerConnection = prepareNewConnection(true);
     }
