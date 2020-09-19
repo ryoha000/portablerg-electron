@@ -29,6 +29,6 @@ import { onMount } from 'svelte';
   <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
   <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
   <div>
-    <video bind:this="{remoteVideo}" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
+    <video bind:this="{remoteVideo}" autoplay style="width: 100%; height: 80%; border: 1px solid black;"></video>
 	</div>
 </div>

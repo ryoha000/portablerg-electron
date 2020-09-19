@@ -120,7 +120,7 @@ const useWebRTC = () => {
   // WebRTCを利用する準備をする
   function prepareNewConnection(isOffer: boolean) {
     const pc_config = {"iceServers":[ {"urls":"stun:stun.webrtc.ecl.ntt.com:3478"} ]};
-    const peer = new RTCPeerConnection();
+    const peer = new RTCPeerConnection(pc_config);
 
     // リモートのMediStreamTrackを受信した時
     peer.ontrack = evt => {
