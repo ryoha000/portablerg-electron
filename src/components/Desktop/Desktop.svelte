@@ -15,7 +15,7 @@
 	let setting: Setting | null = null
 	onMount(async () => {
 		try {
-			listenID((i: string, n: string) => { id = i; name = n })
+			listenID(async (i: string, n: string) => { id = i; name = n; await setStreamByID(i, localVideo) })
 			setting = await getSetting()
 			setupWS(setting)
 		} catch (e) {
@@ -25,7 +25,8 @@
 	const {
 		setupWS,
 		setStreamByID,
-		hangUp
+		connect,
+		hangUp,
 	} = useWebRTC(undefined)
 	const setStream = () => {
 		setStreamByID(id, localVideo)
@@ -59,12 +60,14 @@
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
 	<ColumnTemplate label="端末側URL">
-		<div class="flexContainer">
-			<div class="clickable" on:click="{() => copy(`http://${setting?.privateIP}:${setting?.browserPort}/#/client`)}">
-				<Icon name="content-copy" />
+		{#if setting}
+			<div class="flexContainer">
+				<div class="clickable" on:click="{() => copy(`http://${setting?.privateIP}:${setting?.browserPort}/#/client`)}">
+					<Icon name="content-copy" />
+				</div>
+				<div>{`http://${setting?.privateIP}:${setting?.browserPort}/#/client`}</div>
 			</div>
-			<div>http://192.164.0.4:5000/#/client</div>
-		</div>
+		{/if}
 	</ColumnTemplate>
 	<ColumnTemplate label="Windowの選択">
 		<div>現在: {name ?? '未選択'}</div>
@@ -84,6 +87,7 @@
 		{/if}
 	</ColumnTemplate>
   <button type="button" on:click="{setStream}">Start Video</button>
+  <button type="button" on:click="{connect}">Connect</button>
   <button type="button" on:click="{hangUp}">Hang Up</button>
   <div>
     <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>

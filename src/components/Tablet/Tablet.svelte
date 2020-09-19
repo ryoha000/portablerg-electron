@@ -12,10 +12,12 @@ import { onMount } from 'svelte';
     const {
       hangUp,
       setupWS,
-      connect
+      connect,
+      playRemote
     } = useWebRTC(remoteVideo)
     hu = hangUp
     con = connect
+    pr = playRemote
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
     } else {
@@ -24,6 +26,7 @@ import { onMount } from 'svelte';
   })
   let hu: () => void
   let con: () => void
+  let pr: () => void
 </script>
 
 <style></style>
@@ -32,6 +35,7 @@ import { onMount } from 'svelte';
 <div>
   <button type="button" on:click="{con}">connect</button>
   <button type="button" on:click="{hu}">Hang Up</button>
+  <button type="button" on:click="{pr}">play remote </button>
   <div>
     <video bind:this="{remoteVideo}" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
 	</div>

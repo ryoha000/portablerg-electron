@@ -1,3 +1,3 @@
 interface MediaDevices {
-  getDesktopSources: () => Electron.DesktopCapturerSource[]
+  getDesktopSources: () => Promise<Electron.DesktopCapturerSource[]>
 }

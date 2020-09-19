@@ -101,7 +101,7 @@ const useWebRTC = (
     try {
       await element.play();
     } catch(error) {
-      console.log('error auto play:' + error);
+      console.error('error auto play:' + error);
     }
   }
   // WebRTCを利用する準備をする
@@ -277,11 +277,18 @@ const useWebRTC = (
     element.pause();
     element.srcObject = null;
   }
+
+  const playRemote = () => {
+    if (remoteVideo && remoteStream) {
+      playVideo(remoteVideo, remoteStream)
+    }
+  }
   return {
     setStreamByID,
     setupWS,
     connect,
-    hangUp
+    hangUp,
+    playRemote
   }
 }
 
