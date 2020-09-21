@@ -1,15 +1,15 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-
+  import { onMount } from 'svelte';
 	import useWebRTC from '../../lib/webRTC'
 
-	let remoteVideo: HTMLVideoElement
+  let remoteVideo: HTMLVideoElement
   const {
     hangUp,
     setupWS,
     playRemoteVideo,
     sendMouseMove,
-    connect
+    connectHost,
+    hostID
   } = useWebRTC()
   onMount(() => {
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -18,17 +18,31 @@ import { onMount } from 'svelte';
       setupWS({ privateIP: location.hostname, browserPort: 2401 })
     }
   })
+  const a = async() => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+  }
+  const changeHostID = (e: Event & { target: EventTarget & HTMLInputElement; }) => {
+    hostID.set(e.target.valueAsNumber)
+  }
 </script>
 
-<style></style>
+<style>
+  .window {
+    width: 100%;
+    height: 100%;
+    border: 1px solid black;
+  }
+</style>
 
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
-  <button type="button" on:click="{connect}">Connect</button>
+  <button type="button" on:click="{connectHost}">Connect</button>
   <button type="button" on:click="{hangUp}">Hang Up</button>
   <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
   <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
+  <button type="button" on:click="{a}">s</button>
+  <input on:input="{changeHostID}" type="number" />
   <div>
-    <video bind:this="{remoteVideo}" autoplay style="width: 100%; height: 80%; border: 1px solid black;"></video>
+    <video class="window" bind:this="{remoteVideo}" autoplay></video>
 	</div>
 </div>

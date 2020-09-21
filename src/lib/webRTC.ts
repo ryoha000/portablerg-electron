@@ -1,4 +1,5 @@
 import type { Setting } from '../@types/Original'
+import { writable, get } from 'svelte/store';
 
 const useWebRTC = () => {
   let localStream: null | MediaStream = null;
@@ -7,18 +8,21 @@ const useWebRTC = () => {
   let remoteVideoStream: null | MediaStream = null
   let ws: WebSocket | null = null
   let mouseMoveChannel: RTCDataChannel | null = null
+  let makeAnswerCount = 0
+  const hostID = writable(0)
+
   const setupWS = (setting: Setting) => {
     const wsUrl = `ws://${setting.privateIP}:${setting.browserPort + 1}/`;
     console.log(wsUrl)
     ws = new WebSocket(wsUrl);
     ws.onopen = (evt) => {
-      console.log(' ws open()');
+      console.log('ws open()');
     };
     ws.onerror = (err) => {
-      console.error(' ws onerror() ERR:', err);
+      console.error('ws onerror() ERR:', err);
     };
     ws.onmessage = (evt) => {
-      console.log(' ws onmessage() data:', evt.data);
+      console.log('ws onmessage() data:', evt.data);
       const message = JSON.parse(evt.data);
       switch(message.type){
         case 'offer': {
@@ -59,7 +63,7 @@ const useWebRTC = () => {
       peerConnection.addIceCandidate(candidate);
     }
     else {
-      console.error('PeerConnection not exist!');
+      console.warn('PeerConnection not exist!');
       return;
     }
   }
@@ -69,22 +73,11 @@ const useWebRTC = () => {
     console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
     console.log('sending candidate=' + message);
-    ws?.send(message);
-  }
-
-  // getUserMediaでカメラ、マイクにアクセス
-  async function startVideo(localVideo: HTMLMediaElement) {
-    try{
-      localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-      // localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
-      if (localStream) {
-        playVideo(localVideo, localStream);
-      } else {
-        console.error("localstream not found")
-      }
-    } catch(err){
-      console.error('mediaDevice.getUserMedia() error:', err);
+    if (!ws) {
+      console.error('ws is NULL !!!')
+      return
     }
+    ws.send(message);
   }
 
   const setStreamByID = async (id: string, localVideo: HTMLMediaElement) => {
@@ -125,7 +118,6 @@ const useWebRTC = () => {
     // リモートのMediStreamTrackを受信した時
     peer.ontrack = evt => {
       console.log('-- peer.ontrack()');
-      console.log(evt.streams)
       remoteVideoStream = evt.streams[0]
       // playVideo(remoteVideo, evt.streams[0]);
     };
@@ -146,11 +138,13 @@ const useWebRTC = () => {
       try {
         if(isOffer){
           if(negotiationneededCounter === 0){
-            let offer = await peer.createOffer();
+            console.warn('createOffer')
+            const offer = await peer.createOffer();
             console.log('createOffer() succsess in promise');
             await peer.setLocalDescription(offer);
             console.log('setLocalDescription() succsess in promise');
-            sendSdp(peer.localDescription);
+            const id = sendSdp(peer.localDescription);
+            hostID.set(id)
             negotiationneededCounter++;
           }
         }
@@ -200,16 +194,23 @@ const useWebRTC = () => {
   }
 
   // 手動シグナリングのための処理を追加する
-  function sendSdp(sessionDescription: RTCSessionDescription | null) {
+  function sendSdp(sessionDescription: RTCSessionDescription | null): number {
+    if (!sessionDescription) {
+      console.error('sessionDescription is NULL')
+      return 0
+    }
     console.log('---sending sdp ---');
-    // textForSendSdp.value = sessionDescription?.sdp ?? '';
-    /*---
-      textForSendSdp.focus();
-      textForSendSdp.select();
-    ----*/
-    const message = JSON.stringify(sessionDescription);
+    const rId = Math.floor(Math.random() * 100)
+    console.warn('id: ', rId)
+    const m = { type: sessionDescription.type, sdp: sessionDescription.sdp, id: rId }
+    const message = JSON.stringify(m);
     console.log('sending SDP=' + message);
-    ws?.send(message);     
+    if (!ws) {
+      console.error('ws is NULL !!!')
+      return 0
+    }
+    ws.send(message);
+    return rId
   }
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
@@ -226,6 +227,8 @@ const useWebRTC = () => {
   // Answer SDPを生成する
   async function makeAnswer() {
     console.log('sending Answer. Creating remote session description...' );
+    makeAnswerCount++
+    console.warn('mekeAnswerCount: ', makeAnswerCount)
     if (! peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
@@ -241,28 +244,6 @@ const useWebRTC = () => {
     }
   }
 
-  // Receive remote SDPボタンが押されたらOffer側とAnswer側で処理を分岐
-  function onSdpText(textToReceiveSdp: HTMLTextAreaElement) {
-    const text = textToReceiveSdp.value;
-    if (peerConnection) {
-      console.log('Received answer text...');
-      const answer = new RTCSessionDescription({
-        type : 'answer',
-        sdp : text,
-      });
-      setAnswer(answer);
-    }
-    else {
-      console.log('Received offer text...');
-      const offer = new RTCSessionDescription({
-        type : 'offer',
-        sdp : text,
-      });
-      setOffer(offer);
-    }
-    textToReceiveSdp.value ='';
-  }
-
   // Offer側のSDPをセットする処理
   async function setOffer(sessionDescription: RTCSessionDescription) {
     if (peerConnection) {
@@ -271,8 +252,8 @@ const useWebRTC = () => {
     peerConnection = prepareNewConnection(false);
     try{
       await peerConnection.setRemoteDescription(sessionDescription);
-      console.log('setRemoteDescription(answer) succsess in promise');
-      makeAnswer();
+      console.log('setRemoteDescription(offer) succsess in promise');
+      await makeAnswer();
     } catch(err){
       console.error('setRemoteDescription(offer) ERROR: ', err);
     }
@@ -301,7 +282,11 @@ const useWebRTC = () => {
         negotiationneededCounter = 0;
         const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
-        ws?.send(message);
+        if (!ws) {
+          console.error('ws is NULL !!!')
+          return
+        }
+        ws.send(message);
         remoteVideoStream = null
         return;
       }
@@ -324,16 +309,25 @@ const useWebRTC = () => {
   }
 
   function sendMouseMove(dPoint: { x: number, y: number }) {
-    // mouseMoveChannel?.send(new Blob([ JSON.stringify(dPoint) ], { type: 'text/plain' }))
+    mouseMoveChannel?.send(JSON.stringify(dPoint))
+  }
+
+  const connectHost = () => {
+    if (!ws) {
+      console.error('ws is NULL !!!')
+      return
+    }
+    ws.send(JSON.stringify({ type: 'connect', id: get(hostID) }));
   }
   return {
     setupWS,
     setStreamByID,
-    startVideo,
     hangUp,
     connect,
     playRemoteVideo,
-    sendMouseMove
+    sendMouseMove,
+    hostID,
+    connectHost
   }
 }
 

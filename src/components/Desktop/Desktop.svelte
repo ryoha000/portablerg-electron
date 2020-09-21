@@ -10,14 +10,13 @@
 	import type { Setting } from '../../@types/Original'
 
 	let localVideo: HTMLVideoElement
-	let remoteVideo: HTMLVideoElement
 	let id: string
 	let name: string
 	let setting: Setting | null = null
 	onMount(async () => {
 		try {
-			listenID((i: string, n: string) => { id = i; name = n;})
-			// listenID((i: string, n: string) => { id = i; name = n; setStreamByID(i, localVideo) })
+			// listenID((i: string, n: string) => { id = i; name = n;})
+			listenID((i: string, n: string) => { id = i; name = n; setStreamByID(i, localVideo) })
 			setting = await getSetting()
 			setupWS(setting)
 		} catch (e) {
@@ -28,11 +27,9 @@
 		setupWS,
 		setStreamByID,
 		connect,
-		hangUp
+		hangUp,
+		hostID
 	} = useWebRTC()
-	const setStream = () => {
-		setStreamByID(id, localVideo)
-	}
 
 	const confirmPrivateIP = async (e: CustomEvent<{ newIP: string}>) => {
 		if (setting) {
@@ -72,6 +69,7 @@
 		{/if}
 	</ColumnTemplate>
 	<ColumnTemplate label="Windowの選択">
+    <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 		<div>現在: {name ?? '未選択'}</div>
 		<div class="flexContainer">
 			<TextButton label="リセット" color="rgb(255, 0, 0)" />
@@ -88,11 +86,7 @@
 			<EditPort port="{setting.browserPort}" on:confirm="{confirmBrowserPort}" on:reset="{reset}" />
 		{/if}
 	</ColumnTemplate>
-  <button type="button" on:click="{setStream}">Start Video</button>
   <button type="button" on:click="{connect}">Connect</button>
-  <button type="button" on:click="{hangUp}">Hang Up</button>
-  <div>
-    <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
-    <video bind:this="{remoteVideo}" autoplay style="width: 160px; height: 120px; border: 1px solid black;"></video>
-	</div>
+	<button type="button" on:click="{hangUp}">Hang Up</button>
+	<div>{$hostID}</div>
 </div>
