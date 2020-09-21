@@ -1,4 +1,4 @@
-declare module 'zingtouch' {
+declare module 'ZingTouch' {
   class Gesture {
     constructor();
     end(e: any): any;
@@ -32,6 +32,12 @@ declare module 'zingtouch' {
     move(e: any, t: any, n: any): any;
     start(e: any): any;
   }
+  class Distance extends Gesture{
+    constructor(options?: TapOptions);
+    // end(e: any): any;
+    // move(e: any, t: any, n: any): any;
+    // start(e: any): any;
+  }
   class Expand extends Gesture {
     constructor(options?: any);
   }
@@ -41,7 +47,12 @@ declare module 'zingtouch' {
 
   class Region {
     constructor(element: HTMLElement, capture?: boolean, preventDefault?: boolean)
-    bind(element: HTMLElement, gesture: string, handler: (e: CustomEvent<ActionEvent>) => void, capture?: boolean): void;
+    bind(
+      element: HTMLElement,
+      gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
+      handler: (e: CustomEvent<ActionEvent>) => void,
+      capture?: boolean
+    ): void;
     bind(element: HTMLElement): ZingChainable;
     bindOnce(element: HTMLElement, gesture: string, handler: () => void, capture?: boolean): void;
     bindOnce(element: HTMLElement): ZingChainable;
@@ -76,24 +87,24 @@ declare module 'zingtouch' {
     threshold?: number
   }
 
-  interface ActionEvent {
-    bubbles: boolean
-    cancelBubble: boolean
-    cancelable: boolean
-    composed: boolean
-    currentTarget: HTMLElement | null
-    defaultPrevented: boolean
-    detail: {
-      data: Array
-      events: Array
-    }
-    eventPhase: 0
-    isTrusted: boolean
-    path: Array
-    returnValue: boolean
-    srcElement: any
-    target: any
-    timeStamp: number
-    type: string
+}
+interface ActionEvent {
+  bubbles: boolean
+  cancelBubble: boolean
+  cancelable: boolean
+  composed: boolean
+  currentTarget: HTMLElement | null
+  defaultPrevented: boolean
+  detail: {
+    data: Array
+    events: Array
   }
+  eventPhase: 0
+  isTrusted: boolean
+  path: Array
+  returnValue: boolean
+  srcElement: any
+  target: any
+  timeStamp: number
+  type: string
 }

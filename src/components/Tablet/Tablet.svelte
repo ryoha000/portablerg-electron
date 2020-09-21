@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-	import useWebRTC from '../../lib/webRTC'
+  import useWebRTC from '../../lib/webRTC'
+  import TouchPad from './TouchPad.svelte'
 
   let remoteVideo: HTMLVideoElement
   const {
@@ -28,21 +29,25 @@
 
 <style>
   .window {
-    width: 100%;
-    height: 100%;
+    width: 10%;
+    height: 10%;
     border: 1px solid black;
   }
 </style>
 
-<!-- svelte-ignore a11y-media-has-caption -->
 <div>
-  <button type="button" on:click="{connectHost}">Connect</button>
-  <button type="button" on:click="{hangUp}">Hang Up</button>
-  <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
-  <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
-  <button type="button" on:click="{a}">s</button>
-  <input on:input="{changeHostID}" type="number" />
+
+  <TouchPad />
+  <!-- svelte-ignore a11y-media-has-caption -->
   <div>
-    <video class="window" bind:this="{remoteVideo}" autoplay></video>
-	</div>
+    <button type="button" on:click="{connectHost}">Connect</button>
+    <button type="button" on:click="{hangUp}">Hang Up</button>
+    <button type="button" on:click="{() => playRemoteVideo(remoteVideo)}">startRemote video</button>
+    <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
+    <button type="button" on:click="{a}">s</button>
+    <input on:input="{changeHostID}" type="number" />
+    <div>
+      <video class="window" bind:this="{remoteVideo}" autoplay></video>
+    </div>
+  </div>
 </div>
