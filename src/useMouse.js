@@ -25,7 +25,11 @@ module.exports.useMouse = () => {
 		robot.moveMouse(resPos.x, resPos.y)
 	}
 	const scroll = (dPoint) => {
-		robot.scrollMouse(dPoint.x, dPoint.y)
+		robot.moveMouse(dPoint.x, dPoint.y);
+		console.log('mouse: ', dPoint)
+		setInterval(() => {
+			robot.scrollMouse(100, 0)
+		}, 5)
 	}
 	const click = (option = { button: 'left', double: false }) => {
 		robot.mouseClick(option.button, option.double)

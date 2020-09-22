@@ -1,5 +1,6 @@
 import type { Setting } from '../@types/Original'
 import { writable, get } from 'svelte/store';
+import { mouseScroll } from '../renderLogic'
 
 const useWebRTC = () => {
   let localStream: null | MediaStream = null;
@@ -48,13 +49,18 @@ const useWebRTC = () => {
           console.log('peer is closed ...');
           hangUp();
           break;
-        }      
+        }  
+        case 'scroll': {
+          console.log('mouse scroll')
+          mouseScroll(message.dPoint)
+        }    
         default: { 
           console.log("Invalid message"); 
           break;              
         }         
       }
     };
+    return ws
   }
 
   // ICE candaidate受信時にセットする

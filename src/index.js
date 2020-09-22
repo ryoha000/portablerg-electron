@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require('electr
 const path = require('path');
 const { setupWebSocketServer, setupClientServer } = require('./server')
 const { getPrivateIP, removePrevFireWall, addNewFireWall, getSetting, updateSetting, resetSetting } = require('./ipcHandlers')
-const { useMouse } = require('./lib/useMouse')
+const { useMouse } = require('./useMouse')
 
 // Live Reload
 require('electron-reload')(__dirname, {
@@ -80,6 +80,29 @@ const createWindow = async () => {
     await resetSetting()
     return
   })
+  const {
+    scroll,
+    init,
+    dispose,
+    move
+  } = useMouse()
+  ipcMain.handle('scroll', async (e, dPoint) => {
+    console.log('scroll', dPoint)
+    scroll(dPoint)
+    return
+  })
+  ipcMain.handle('init', async (e) => {
+    init()
+    return
+  })
+  ipcMain.handle('dispose', async (e) => {
+    dispose()
+    return
+  })
+  ipcMain.handle("move", async (e, dPoint) => {
+    move(dPoint);
+    return;
+  });
 };
 
 // This method will be called when Electron has finished

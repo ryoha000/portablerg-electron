@@ -63,3 +63,26 @@ export const copy = (text: string) => {
   const { clipboard } = require('electron').remote
   clipboard.writeText(text)
 }
+
+interface Point {
+  x: number
+  y: number
+}
+
+export const mouseInit = async () => {
+  await ipc?.invoke("init");
+};
+
+export const mouseDispose = async () => {
+  await ipc?.invoke("dispose");
+};
+
+export const mouseMove = async (dPoint: Point) => {
+  await ipc?.invoke("move", dPoint);
+};
+
+export const mouseScroll = async (dPoint: Point) => {
+  console.log('dPoint: ', dPoint)
+  await ipc?.invoke("scroll", dPoint);
+  // useMouse(dPoint)
+};
