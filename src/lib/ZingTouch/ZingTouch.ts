@@ -18,7 +18,7 @@ import Tap from './gestures/Tap.js';
  * @namespace ZingTouch
  */
 let ZingTouch: any = {
-  _regions: [],
+  _regions: [] as Region[],
 
   // Constructors
   Gesture,

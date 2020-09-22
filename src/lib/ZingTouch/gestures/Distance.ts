@@ -23,7 +23,11 @@ class Distance extends Gesture {
    * @param {Function} [options.onStart] - The on start callback
    * @param {Function} [options.onMove] - The on move callback
    */
-  constructor(options: any) {
+  constructor(options?: {
+    threshold?: number,
+    onStart?: (e: CustomEvent) => void,
+    onMove?: (e: CustomEvent) => void
+  }) {
     super();
 
     /**

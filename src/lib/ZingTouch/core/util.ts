@@ -90,7 +90,7 @@ let util = {
    * @param {number} projectionY
    * @return {number} - Radians along the unit circle where the projection lies
    */
-  getAngle(originX: any, originY: any, projectionX: any, projectionY: any) {
+  getAngle(originX: number, originY: number, projectionX: number, projectionY: number) {
     return Math.atan2(projectionY - originY, projectionX - originX);
   },
 

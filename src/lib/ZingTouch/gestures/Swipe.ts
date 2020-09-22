@@ -163,7 +163,7 @@ class Swipe extends Gesture {
   end(inputs: any) {
     // @ts-expect-error ts-migrate(2339) FIXME: Property 'numInputs' does not exist on type 'Swipe... Remove this comment to see the full error message
     if (this.numInputs === inputs.length) {
-      let output = {
+      let output: SwipeData = {
         data: [],
       };
 
@@ -210,13 +210,9 @@ class Swipe extends Gesture {
             currentMove.x, currentMove.y, currentMove.time);
 
           output.data[i] = {
-            // @ts-expect-error ts-migrate(2322) FIXME: Type 'number' is not assignable to type 'never'.
             velocity: velocity,
-            // @ts-expect-error ts-migrate(2322) FIXME: Type 'number' is not assignable to type 'never'.
             distance: util.distanceBetweenTwoPoints(lastMove.x, currentMove.x, lastMove.y, currentMove.y),
-            // @ts-expect-error ts-migrate(2322) FIXME: Type 'number' is not assignable to type 'never'.
             duration:  currentMove.time - lastMove.time,
-            // @ts-expect-error ts-migrate(2322) FIXME: Type 'number' is not assignable to type 'never'.
             currentDirection: util.getAngle(
               lastMove.x,
               lastMove.y,

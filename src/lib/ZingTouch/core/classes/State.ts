@@ -66,7 +66,6 @@ class State {
     // @ts-expect-error ts-migrate(2554) FIXME: Expected 1 arguments, but got 0.
     this.registerGesture(new Pan(), 'pan');
     this.registerGesture(new Rotate(), 'rotate');
-    // @ts-expect-error ts-migrate(2554) FIXME: Expected 1 arguments, but got 0.
     this.registerGesture(new Distance(), 'distance');
     // @ts-expect-error ts-migrate(2554) FIXME: Expected 1 arguments, but got 0.
     this.registerGesture(new Swipe(), 'swipe');

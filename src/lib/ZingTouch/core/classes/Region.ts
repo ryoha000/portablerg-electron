@@ -28,7 +28,7 @@ class Region {
    *  functionality should be disabled;
    * @param {Number} id - The id of the region, assigned by the ZingTouch object
    */
-  constructor(element: any, capture: any, preventDefault: any, id: any) {
+  constructor(element: HTMLElement, capture?: boolean, preventDefault?: boolean, id?: number) {
     /**
      * The identifier for the Region. This is assigned by the ZingTouch object
      * and is used to hash gesture id for uniqueness.
@@ -114,7 +114,7 @@ class Region {
   bind(
     element: HTMLElement,
     gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
-    handler: (e: CustomEvent<ActionEvent>) => void,
+    handler: (e: CustomEvent) => void,
     capture?: boolean,
     bindOnce?:boolean
   ) {
@@ -147,7 +147,7 @@ class Region {
   bindOnce(
     element: HTMLElement,
     gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
-    handler: (e: CustomEvent<ActionEvent>) => void,
+    handler: (e: CustomEvent) => void,
     capture?: boolean
   ) {
     this.bind(element, gesture, handler, capture, true);
@@ -161,7 +161,7 @@ class Region {
    *   or the actual object being used.
    * @return {Array} - An array of Bindings that were unbound to the element;
    */
-  unbind(element: any, gesture: any) {
+  unbind(element: HTMLElement, gesture: any) {
     // @ts-expect-error ts-migrate(2339) FIXME: Property 'state' does not exist on type 'Region'.
     let bindings = this.state.retrieveBindingsByElement(element);
     let unbound: any = [];

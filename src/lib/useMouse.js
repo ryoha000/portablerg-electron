@@ -1,13 +1,12 @@
-import robot from 'robotjs'
+const robot = require('robotjs')
 
-export interface Point {
-	x: number
-	y: number
-}
+// export const a = (dPoint) => {
+// 	robot.scrollMouse(dPoint.x, dPoint.y)
+// }
 
-const useMouse = () => {
-	let timer: NodeJS.Timeout | null = null
-	let mousePoint: Point = { x: 0, y: 0 }
+module.exports.useMouse = () => {
+	let timer = null
+	let mousePoint = { x: 0, y: 0 }
 
 	const init = () => {
 		timer = setInterval(() => {
@@ -21,30 +20,24 @@ const useMouse = () => {
 			clearInterval(timer)
 		}
 	}
-	const move = (dPoint: Point) => {
+	const move = (dPoint) => {
 		const resPos = getResultPosition(dPoint)
 		robot.moveMouse(resPos.x, resPos.y)
 	}
-	const scroll = (dPoint: Point) => {
+	const scroll = (dPoint) => {
 		robot.scrollMouse(dPoint.x, dPoint.y)
 	}
-	const click = (option: {
-		button: 'left' | 'right' | 'middle',
-		double: boolean
-	} = { button: 'left', double: false }) => {
+	const click = (option = { button: 'left', double: false }) => {
 		robot.mouseClick(option.button, option.double)
 	}
-	const dragEdge = (option: {
-		down: 'down' | 'up',
-		button: 'left' | 'right' | 'middle'
-	} = { down: 'down', button: 'left' }) => {
+	const dragEdge = (option = { down: 'down', button: 'left' }) => {
 		robot.mouseToggle(option.down, option.button)
 	}
-	const dragging = (dPoint: Point) => {
+	const dragging = (dPoint) => {
 		const resPos = getResultPosition(dPoint)
 		robot.dragMouse(resPos.x, resPos.y)
 	}
-	const getResultPosition = (dPoint: Point) => {
+	const getResultPosition = (dPoint) => {
 		return {
 			x: mousePoint.x + dPoint.x,
 			y: mousePoint.y + dPoint.y
@@ -74,5 +67,3 @@ const useMouse = () => {
 		dragging
 	}
 }
-
-export default useMouse
