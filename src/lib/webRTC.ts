@@ -287,7 +287,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   }
 
   // P2P通信を切断する
-  function hangUp(){
+  function hangUp(video?: HTMLMediaElement){
     if (peerConnection) {
       if(peerConnection.iceConnectionState !== 'closed'){
         peerConnection.close();
@@ -295,6 +295,9 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
         negotiationneededCounter = 0;
         const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
+        if (video) {
+          video.srcObject = null
+        }
         if (!ws) {
           console.error('ws is NULL !!!')
           return

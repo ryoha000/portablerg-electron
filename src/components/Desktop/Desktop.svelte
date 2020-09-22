@@ -92,6 +92,6 @@
 		{/if}
 	</ColumnTemplate>
   <button type="button" on:click="{connect}">Connect</button>
-	<button type="button" on:click="{hangUp}">Hang Up</button>
+	<button type="button" on:click="{() => hangUp()}">Hang Up</button>
 	<div>{$hostID}</div>
 </div>

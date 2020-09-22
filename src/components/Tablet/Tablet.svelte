@@ -39,7 +39,7 @@
   <!-- svelte-ignore a11y-media-has-caption -->
   <div>
     <button type="button" on:click="{connectHost}">Connect</button>
-    <button type="button" on:click="{hangUp}">Hang Up</button>
+    <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
     <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
     <div>
       <video class="window" bind:this="{remoteVideo}" autoplay></video>
