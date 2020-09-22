@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import useTouch from './useTouch'
+  import useTouch, { message } from './useTouch'
 
   let container: HTMLDivElement
+  export let ws: WebSocket
 
-  const { init, message } = useTouch()
   onMount(() => {
+    const { init } = useTouch(ws)
     init(container)
   })
 </script>

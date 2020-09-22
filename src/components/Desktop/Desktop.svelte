@@ -13,16 +13,6 @@
 	let id: string
 	let name: string
 	let setting: Setting | null = null
-	onMount(async () => {
-		try {
-			// listenID((i: string, n: string) => { id = i; name = n;})
-			listenID((i: string, n: string) => { id = i; name = n; setStreamByID(i, localVideo) })
-			setting = await getSetting()
-			setupWS(setting)
-		} catch (e) {
-			console.error(e)
-		}
-	})
 	const {
 		setupWS,
 		setStreamByID,
@@ -30,6 +20,21 @@
 		hangUp,
 		hostID
 	} = useWebRTC()
+	onMount(async () => {
+		try {
+			// listenID((i: string, n: string) => { id = i; name = n;})
+			listenID(async (i: string, n: string) => {
+				id = i
+				name = n
+				await setStreamByID(i, localVideo)
+				connect()
+			})
+			setting = await getSetting()
+			setupWS(setting)
+		} catch (e) {
+			console.error(e)
+		}
+	})
 
 	const confirmPrivateIP = async (e: CustomEvent<{ newIP: string}>) => {
 		if (setting) {

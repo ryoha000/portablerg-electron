@@ -2,7 +2,7 @@ import type { Setting } from '../@types/Original'
 import { writable, get } from 'svelte/store';
 import { mouseScroll } from '../renderLogic'
 
-const useWebRTC = () => {
+const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   let localStream: null | MediaStream = null;
   let peerConnection: null | RTCPeerConnection = null;
   let negotiationneededCounter = 0;
@@ -108,6 +108,9 @@ const useWebRTC = () => {
   // Videoの再生を開始する
   async function playVideo(element : HTMLMediaElement, stream: MediaStream) {
     console.log(element.srcObject)
+    if (element.srcObject) {
+      return
+    }
     element.srcObject = stream;
     try {
       await element.play();
@@ -122,9 +125,12 @@ const useWebRTC = () => {
     const peer = new RTCPeerConnection(pc_config);
 
     // リモートのMediStreamTrackを受信した時
-    peer.ontrack = evt => {
+    peer.ontrack = async (evt) => {
       console.log('-- peer.ontrack()');
       remoteVideoStream = evt.streams[0]
+      if (videoCallback) {
+        await videoCallback(evt.streams[0])
+      }
       // playVideo(remoteVideo, evt.streams[0]);
     };
 
@@ -206,7 +212,8 @@ const useWebRTC = () => {
       return 0
     }
     console.log('---sending sdp ---');
-    const rId = Math.floor(Math.random() * 100)
+    // const rId = Math.floor(Math.random() * 100)
+    const rId = 0
     console.warn('id: ', rId)
     const m = { type: sessionDescription.type, sdp: sessionDescription.sdp, id: rId }
     const message = JSON.stringify(m);
@@ -323,7 +330,7 @@ const useWebRTC = () => {
       console.error('ws is NULL !!!')
       return
     }
-    ws.send(JSON.stringify({ type: 'connect', id: get(hostID) }));
+    ws.send(JSON.stringify({ type: 'connect', id: 0 }));
   }
   return {
     setupWS,
@@ -333,7 +340,8 @@ const useWebRTC = () => {
     playRemoteVideo,
     sendMouseMove,
     hostID,
-    connectHost
+    connectHost,
+    playVideo
   }
 }
 

@@ -15,10 +15,10 @@ export const decideWindow = async (id: string, name: string) =>{
   await ipc?.invoke('decideWindow', id, name)
 }
 
-export const listenID = (callback: (id: string, name: string) => void) => {
-  ipc?.on('id', (e: unknown, id: string, name: string) => {
+export const listenID = (callback: (id: string, name: string) => Promise<void>) => {
+  ipc?.on('id', async (e: unknown, id: string, name: string) => {
     console.log('id: ', id, 'name: ', name)
-    callback(id, name)
+    await callback(id, name)
   })
 }
 
