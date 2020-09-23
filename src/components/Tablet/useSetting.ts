@@ -1,6 +1,6 @@
 import { writable, get, derived } from 'svelte/store';
 
-interface TabletSetting {
+export interface TabletSetting {
   window: {
     rect: Rect
   }
@@ -30,7 +30,7 @@ export enum ControlType {
   Down
 }
 
-interface Rect {
+export interface Rect {
   width: string
   height: string
   start: Point
@@ -49,7 +49,7 @@ export interface ControlStyle {
   }[]
 }
 
-const setting = writable<TabletSetting | null>(null)
+export const setting = writable<TabletSetting | null>(null)
 
 export const windowStyle = derived(setting, ($setting) => {
   if (!$setting) {
@@ -109,11 +109,11 @@ const useSetting = () => {
     setting.set(s)
     console.log('setting: ', s)
   }
-  const update = async (newSetting: TabletSetting) => {
+  const update = async () => {
     const res = await fetch(path, {
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
-      body: JSON.stringify(newSetting)
+      body: JSON.stringify(get(setting))
     })
     console.log(res)
   }

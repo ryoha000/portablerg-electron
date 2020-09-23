@@ -7,7 +7,7 @@
 
   let remoteVideo: HTMLVideoElement
   let ws: WebSocket
-  let isOpenLayoutSetting = true
+  let isOpenLayoutSetting = false
   const {
     hangUp,
     setupWS,
