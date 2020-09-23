@@ -21,12 +21,21 @@
       ws = setupWS({ privateIP: location.hostname, browserPort: 2401 })
     }
   })
+  const scroll = () => {
+    ws.send(JSON.stringify({
+      type: 'scroll',
+      dPoint: {
+        x: 0,
+        y: 20
+      }
+    }))
+  }
 </script>
 
 <style>
   .window {
     width: 10%;
-    height: 10%;
+    height: 300%;
     border: 1px solid black;
   }
 </style>
@@ -43,5 +52,6 @@
     <div>
       <video class="window" bind:this="{remoteVideo}" autoplay></video>
     </div>
+    <button type="button" on:click="{scroll}">scroll</button>
   </div>
 </div>
