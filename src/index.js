@@ -84,23 +84,47 @@ const createWindow = async () => {
     scroll,
     init,
     dispose,
-    move
+    move,
+    dragEdge,
+    dragging,
+    click
   } = useMouse()
-  ipcMain.handle('scroll', async (e, dPoint) => {
+  ipcMain.handle('init', (e) => {
+    init()
+    return
+  })
+  ipcMain.handle('dispose', (e) => {
+    dispose()
+    return
+  })
+  ipcMain.handle('scroll', (e, dPoint) => {
     console.log('scroll', dPoint)
     scroll(dPoint)
     return
   })
-  ipcMain.handle('init', async (e) => {
-    init()
-    return
-  })
-  ipcMain.handle('dispose', async (e) => {
-    dispose()
-    return
-  })
-  ipcMain.handle("move", async (e, dPoint) => {
+  ipcMain.handle("move", (e, dPoint) => {
+    console.log('move: ', dPoint)
     move(dPoint);
+    return;
+  });
+  ipcMain.handle("dragStart", (e) => {
+    console.log("dragStart")
+    dragEdge({ down: 'down', button: 'left' });
+    return;
+  });
+  ipcMain.handle("dragEnd", (e) => {
+    console.log("dragEnd")
+    dragEdge({ down: 'up', button: 'left' });
+    return;
+  });
+  ipcMain.handle("dragging", (e, dPoint) => {
+    console.log('dragging: ', dPoint)
+    dragging(dPoint);
+    return;
+  });
+  ipcMain.handle("click", (e) => {
+    console.log('click from ipcMain')
+    click();
     return;
   });
 };

@@ -1,28 +1,29 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import ColumnTemplate from './ColumnTemplate.svelte'
 	import useWebRTC from '../../lib/webRTC'
 	import Icon from '../UI/Icon.svelte'
 	import TextButton from '../UI/TextButton.svelte'
-	import { openDialog, listenID, getSetting, updateSetting, resetSetting, copy } from '../../renderLogic'
+	import { openDialog, listenID, getSetting, updateSetting, resetSetting, copy, mouseDispose } from '../../renderLogic'
 	import EditIp from "./EditIP.svelte";
 	import EditPort from './EditPort.svelte'
 	import type { Setting } from '../../@types/Original'
+	import { mouseInit } from '../../renderLogic'
 
 	let localVideo: HTMLVideoElement
 	let id: string
 	let name: string
 	let setting: Setting | null = null
+
 	const {
 		setupWS,
 		setStreamByID,
 		connect,
-		hangUp,
-		hostID
+		hangUp
 	} = useWebRTC()
+
 	onMount(async () => {
 		try {
-			// listenID((i: string, n: string) => { id = i; name = n;})
 			listenID(async (i: string, n: string) => {
 				id = i
 				name = n
@@ -31,9 +32,13 @@
 			})
 			setting = await getSetting()
 			setupWS(setting)
+			mouseInit()
 		} catch (e) {
 			console.error(e)
 		}
+	})
+	onDestroy(() => {
+		mouseDispose()
 	})
 
 	const confirmPrivateIP = async (e: CustomEvent<{ newIP: string}>) => {
@@ -93,5 +98,4 @@
 	</ColumnTemplate>
   <button type="button" on:click="{connect}">Connect</button>
 	<button type="button" on:click="{() => hangUp()}">Hang Up</button>
-	<div>{$hostID}</div>
 </div>

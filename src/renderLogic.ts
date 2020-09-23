@@ -82,7 +82,22 @@ export const mouseMove = async (dPoint: Point) => {
 };
 
 export const mouseScroll = async (dPoint: Point) => {
-  console.log('dPoint: ', dPoint)
   await ipc?.invoke("scroll", dPoint);
-  // useMouse(dPoint)
 };
+
+export const mouseDragStart = async () => {
+  await ipc?.invoke('dragStart')
+}
+
+export const mouseDragEnd = async () => {
+  await ipc?.invoke('dragEnd')
+}
+
+export const mouseDragging = async (dPoint: Point) => {
+  await ipc?.invoke('dragging', dPoint)
+}
+
+export const mouseClick = async () => {
+  console.log('click from renderLogic')
+  await ipc?.invoke('click')
+}

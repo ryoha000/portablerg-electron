@@ -32,7 +32,6 @@
 </style>
 
 <div>
-
   {#if ws}
     <TouchPad {ws} />
   {/if}

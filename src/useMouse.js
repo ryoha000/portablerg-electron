@@ -6,13 +6,13 @@ const robot = require('robotjs')
 
 module.exports.useMouse = () => {
 	let timer = null
+	let scrollPoint = { x: 0, y: 0 }
 	let mousePoint = { x: 0, y: 0 }
 
 	const init = () => {
+		robot.setMouseDelay(2);
 		timer = setInterval(() => {
-			robot.setMouseDelay(2);
 			mousePoint = robot.getMousePos()
-			console.log(`now mouse position: ${mousePoint}`)
 		}, 1000)
 	}
 	const dispose = () => {
@@ -21,15 +21,14 @@ module.exports.useMouse = () => {
 		}
 	}
 	const move = (dPoint) => {
-		const resPos = getResultPosition(dPoint)
+		const resPos = getResultPosition(mousePoint, dPoint)
 		robot.moveMouse(resPos.x, resPos.y)
+		mousePoint = resPos
 	}
 	const scroll = (dPoint) => {
-		robot.moveMouse(dPoint.x, dPoint.y);
-		console.log('mouse: ', dPoint)
-		setInterval(() => {
-			robot.scrollMouse(100, 0)
-		}, 5)
+		const resPos = getResultPosition(scrollPoint, dPoint)
+		robot.scrollMouse(resPos.x, resPos.y);
+		scrollPoint = resPos
 	}
 	const click = (option = { button: 'left', double: false }) => {
 		robot.mouseClick(option.button, option.double)
@@ -38,13 +37,14 @@ module.exports.useMouse = () => {
 		robot.mouseToggle(option.down, option.button)
 	}
 	const dragging = (dPoint) => {
-		const resPos = getResultPosition(dPoint)
+		const resPos = getResultPosition(mousePoint, dPoint)
 		robot.dragMouse(resPos.x, resPos.y)
+		mousePoint = resPos
 	}
-	const getResultPosition = (dPoint) => {
+	const getResultPosition = (p, dPoint) => {
 		return {
-			x: mousePoint.x + dPoint.x,
-			y: mousePoint.y + dPoint.y
+			x: p.x + dPoint.x,
+			y: p.y + dPoint.y
 		}
 	}
 	const sinMouse = () => {	

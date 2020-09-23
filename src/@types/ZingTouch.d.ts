@@ -12,9 +12,9 @@ class Gesture {
 }
 class Pan extends Gesture {
   constructor(options?: PanOptions);
-  end(e: any): any;
-  move(e: any, t: any, n: any): any;
-  start(e: any): void;
+  end(e: PanEvent): any;
+  move(e: PanEvent, t: any, n: any): any;
+  start(e: PanEvent): void;
 }
 class Rotate extends Gesture{
   constructor(options?: any);
@@ -43,12 +43,24 @@ class Expand extends Gesture {
 class Pinch extends Gesture {
   constructor(options?: any)
 }
+class ZingInput {
+  current: ZingEvent
+  initial: ZingEvent
+  previous: ZingEvent
+}
+
+interface ZingEvent {
+  clientX: number
+  clientY: number
+  x: number
+  y: number
+}
 
 class Region {
   constructor(element: HTMLElement, capture?: boolean, preventDefault?: boolean)
   bind(
     element: HTMLElement,
-    gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
+    gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture | any,
     handler: (e: CustomEvent<ActionEvent>) => void,
     capture?: boolean,
     bindOnce?:boolean
@@ -62,11 +74,12 @@ class Region {
 }
 
 interface ZingChainable {
-  tap(handler: () => void, capture?: boolean): ZingChainable;
-  swipe(handler: () => void, capture?: boolean): ZingChainable;
+  tap(handler: (e: TapEvent) => void, capture?: boolean): ZingChainable;
+  longTap(handler: (e: TapEvent) => void, capture?: boolean): ZingChainable;
+  swipe(handler: (e: SwipeEvent) => void, capture?: boolean): ZingChainable;
   pinch(handler: () => void, capture?: boolean): ZingChainable;
   expand(handler: () => void, capture?: boolean): ZingChainable;
-  pan(handler: () => void, capture?: boolean): ZingChainable;
+  pan(handler: (e: PanEvent) => void, capture?: boolean): ZingChainable;
   rotate(handler: () => void, capture?: boolean): ZingChainable;
 }
 
@@ -96,4 +109,28 @@ interface SwipeData {
   }[]
 }
 
+interface PanData {
+  data: {
+    distanceFromOrigin: number;
+    currentDistance: number;
+    directionFromOrigin: number;
+    currentDirection: number;
+    change: {
+      x: number;
+      y: number;
+    };
+    degreeFromOrigin: number;
+    currentDegree: number;
+  }[]
+}
+
+interface TapData {
+  data: {
+    interval: number
+  }[]
+}
+
 type SwipeEvent = CustomEvent<SwipeData>
+type PanEvent = CustomEvent<PanData>
+type TapEvent = CustomEvent<TapData>
+

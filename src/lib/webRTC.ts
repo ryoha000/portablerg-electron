@@ -1,6 +1,6 @@
 import type { Setting } from '../@types/Original'
 import { writable, get } from 'svelte/store';
-import { mouseScroll } from '../renderLogic'
+import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging } from '../renderLogic'
 
 const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   let localStream: null | MediaStream = null;
@@ -49,11 +49,31 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
           console.log('peer is closed ...');
           hangUp();
           break;
-        }  
+        }
         case 'scroll': {
-          console.log('mouse scroll')
           mouseScroll(message.dPoint)
-        }    
+          break
+        }
+        case 'move': {
+          mouseMove(message.dPoint)
+          break
+        }
+        case 'click': {
+          mouseClick()
+          break
+        }
+        case 'dragStart': {
+          mouseDragStart()
+          break
+        }
+        case 'dragEnd': {
+          mouseDragEnd()
+          break
+        }
+        case 'dragging': {
+          mouseDragging(message.dPoint)
+          break
+        }
         default: { 
           console.log("Invalid message"); 
           break;              
@@ -278,7 +298,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
       console.error('peerConnection NOT exist!');
       return;
     }
-    try{
+    try {
       await peerConnection.setRemoteDescription(sessionDescription);
       console.log('setRemoteDescription(answer) succsess in promise');
     } catch(err){

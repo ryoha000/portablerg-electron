@@ -27,7 +27,7 @@ let ZingTouch: any = {
   Rotate,
   Swipe,
   Tap,
-  Region: function(element: HTMLElement, capture?: boolean, preventDefault?: boolean) {
+  Region: function(element: HTMLElement, capture?: boolean, preventDefault: boolean = true) {
     let id = ZingTouch._regions.length;
     let region = new Region(element, capture, preventDefault, id);
 

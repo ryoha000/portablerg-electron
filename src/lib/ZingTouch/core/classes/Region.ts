@@ -90,8 +90,8 @@ class Region {
     eventNames.forEach((name) => {
       element.addEventListener(name, (e: any) => {
         arbiter(e, this);
-      // @ts-expect-error ts-migrate(2339) FIXME: Property 'capture' does not exist on type 'Region'... Remove this comment to see the full error message
-      }, this.capture);
+      }, { passive: false });
+      // }, this.capture);
     });
   }
 
@@ -113,8 +113,8 @@ class Region {
    */
   bind(
     element: HTMLElement,
-    gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
-    handler: (e: CustomEvent) => void,
+    gesture?: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
+    handler?: (e: CustomEvent) => void,
     capture?: boolean,
     bindOnce?:boolean
   ) {
@@ -146,8 +146,8 @@ class Region {
    */
   bindOnce(
     element: HTMLElement,
-    gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
-    handler: (e: CustomEvent) => void,
+    gesture?: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture,
+    handler?: (e: CustomEvent) => void,
     capture?: boolean
   ) {
     this.bind(element, gesture, handler, capture, true);
