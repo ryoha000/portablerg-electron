@@ -58,8 +58,8 @@ const initialSetting = {
     width: '500px',
     height: '300px',
     start: {
-      x: 'calc(100% - 500px)',
-      y: 'calc(100% - 300px)'
+      x: '0px',
+      y: '0px'
     }
   },
   controlTemplates: [
