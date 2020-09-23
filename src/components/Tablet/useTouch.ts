@@ -18,14 +18,6 @@ const useTouch = (ws: WebSocket) => {
 
   const init = (ele: HTMLElement) => {
     const region: Region = new ZingTouch.Region(document.body);
-    // region.bind(ele, "swipe", (e) => {
-    //   console.warn("swipe!");
-    //   swipe(e);
-    // });
-    // const pi = new ZingTouch.Distance();
-    // region.bind(ele, pi, (e) => {
-    //   message.set(`pinch: ${JSON.stringify(e.detail)}`);
-    // });
 
     setupDrag(region)
     region.bind(ele, 'dragPan', () => {})
@@ -63,59 +55,7 @@ const useTouch = (ws: WebSocket) => {
         }))
       }
     })
-    
-    // const chainableObject: ZingChainable = region.bind(ele);
-    // chainableObject
-    //   .longTap(function(e){
-    //     console.warn('longTap')
-    //     console.log(e.detail);
-    //   })
-    //   .pan(function(e){
-    //     console.log(e.detail);
-    //   })
-    // const ex = new ZingTouch.Distance();
-    // region.bind(ele, ex, (e) => {
-    //   console.log(e)
-    //   message.set(`expand: ${JSON.stringify(e.detail)}`)
-    // })
-    // const zingPan: Pan = new ZingTouch.Pan();
-    // zingPan.start = () => {
-    //   ws.send(JSON.stringify({ type: 'dragStart' }))
-    // }
-    // zingPan.end = () => {
-    //   ws.send(JSON.stringify({ type: 'dragEnd' }))
-    // }
-    // region.bind(ele, "pan", (e) => {
-    //   pan(e)
-    // });
   };
-
-  const swipe = (e: SwipeEvent) => {
-    const data = e.detail.data[0];
-    message.set(
-      `${data.velocity}px/ms, ${Math.round(
-        (data.currentDirection * 180) / Math.PI
-      )}°`
-    );
-    const r = data.velocity * data.duration;
-    const dPoint = {
-      x: r * Math.cos(data.currentDirection / Math.PI),
-      y: r * Math.sin(data.currentDirection / Math.PI),
-    };
-    const m = { type: 'scroll', dPoint: dPoint }
-    ws.send(JSON.stringify(m));
-  };
-  const pan = (e: PanEvent) => {
-    const data = e.detail.data[0]
-    message.set(
-      `pan: ${JSON.stringify(data)}°`
-    );
-    // const m = {
-    //   type: 'dragging',
-    //   dPoint: data.change
-    // }
-    // ws.send(JSON.stringify(m));
-  }
 
   const setupDrag = (region: Region) => {
     const dragPan: Pan = new ZingTouch.Pan({ threshold: ALLOW_DRAG_START_RADIUS, onStart: panStart, onMove: panMove, onEnd: panEnd })

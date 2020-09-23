@@ -6,7 +6,7 @@ const robot = require('robotjs')
 
 module.exports.useMouse = () => {
 	let timer = null
-	let scrollPoint = { x: 0, y: 0 }
+	// let scrollPoint = { x: 0, y: 0 }
 	let mousePoint = { x: 0, y: 0 }
 
 	const init = () => {
@@ -26,9 +26,10 @@ module.exports.useMouse = () => {
 		mousePoint = resPos
 	}
 	const scroll = (dPoint) => {
-		const resPos = getResultPosition(scrollPoint, dPoint)
-		robot.scrollMouse(resPos.x, resPos.y);
-		scrollPoint = resPos
+		// const resPos = getResultPosition(scrollPoint, dPoint)
+		// robot.scrollMouse(resPos.x, resPos.y);
+		robot.scrollMouse(dPoint.x, dPoint.y);
+		// scrollPoint = resPos
 	}
 	const click = (option = { button: 'left', double: false }) => {
 		robot.mouseClick(option.button, option.double)

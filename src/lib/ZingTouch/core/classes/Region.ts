@@ -89,6 +89,10 @@ class Region {
     // Bind detected browser events to the region element.
     eventNames.forEach((name) => {
       element.addEventListener(name, (e: any) => {
+        // @ts-expect-error
+        if (this.preventDefault) {
+          e.stopPropagation()
+        }
         arbiter(e, this);
       }, { passive: false });
       // }, this.capture);

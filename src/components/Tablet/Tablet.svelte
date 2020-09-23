@@ -1,57 +1,77 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import useWebRTC from '../../lib/webRTC'
-  import TouchPad from './TouchPad.svelte'
+  import useSetting, { controlStyles, windowStyle } from './useSetting'
+  import TabletControl from './TabletControl.svelte'
+  import TabletSettingLayout from './TabletSettingLayout.svelte'
 
   let remoteVideo: HTMLVideoElement
   let ws: WebSocket
+  let isOpenLayoutSetting = true
   const {
     hangUp,
     setupWS,
     playVideo,
-    sendMouseMove,
     connectHost,
   } = useWebRTC(async (s) => {
     await playVideo(remoteVideo, s)
   })
+  const { init } = useSetting()
   onMount(() => {
+    init()
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       ws = setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
     } else {
       ws = setupWS({ privateIP: location.hostname, browserPort: 2401 })
     }
   })
-  const scroll = () => {
-    ws.send(JSON.stringify({
-      type: 'scroll',
-      dPoint: {
-        x: 0,
-        y: 20
-      }
-    }))
+  const stop = (e: MouseEvent) => {
+    e.stopPropagation()
   }
 </script>
 
 <style>
+  .container {
+    position: relative;
+    user-select: none;
+    width: 100%;
+    height: 100%;
+  }
   .window {
-    width: 10%;
-    height: 300%;
-    border: 1px solid black;
+    z-index: -1;
+  }
+  .setting {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    z-index: 5;
+  }
+  .btnContainer {
+    display: flex;
+    position: absolute;
+    z-index: 5;
   }
 </style>
 
-<div>
-  {#if ws}
-    <TouchPad {ws} />
-  {/if}
-  <!-- svelte-ignore a11y-media-has-caption -->
-  <div>
+
+<div class="container">
+  <div class="btnContainer">
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
-    <button type="button" on:click="{() => sendMouseMove({x: 0, y: -99})}">send data by data channel</button>
-    <div>
-      <video class="window" bind:this="{remoteVideo}" autoplay></video>
-    </div>
-    <button type="button" on:click="{scroll}">scroll</button>
+    <button type="button" on:click="{() => isOpenLayoutSetting = !isOpenLayoutSetting}">open layout setting</button>
   </div>
+  {#if isOpenLayoutSetting}
+    <div class="setting" on:click="{stop}">
+      <TabletSettingLayout />
+    </div>
+  {/if}
+  {#if ws && !isOpenLayoutSetting}
+    {#each $controlStyles as controlStyle}
+      <TabletControl {ws} {controlStyle} />
+    {/each}
+    <!-- svelte-ignore a11y-media-has-caption -->
+    <video bind:this="{remoteVideo}" autoplay style="{$windowStyle}" class="window"></video>
+  {/if}
 </div>

@@ -43,6 +43,47 @@ module.exports.setupWebSocketServer = (port) => {
   console.log('websocket server start. port=' + port);
 }
 
+const initialSetting = {
+  window: {
+    rect: {
+      width: '80%',
+      height: '80%',
+      start: {
+        x: '0px',
+        y: '0px'
+      }
+    }
+  },
+  controlRect: {
+    width: '500px',
+    height: '300px',
+    start: {
+      x: 'calc(100% - 500px)',
+      y: 'calc(100% - 300px)'
+    }
+  },
+  controlTemplates: [
+    {
+      id: 0,
+      controls: [
+        {
+          rect: {
+            width: '100%',
+            height: '100%',
+            start: {
+              x: '0',
+              y: '0'
+            }
+          },
+          color: [0, 0, 0, 0.1],
+          zIndex: 1,
+          type: 0
+        }
+      ]
+    }
+  ],
+}
+
 module.exports.setupClientServer = (port) => {
   const http = require("http");
   const fs = require('fs');
@@ -58,6 +99,45 @@ module.exports.setupClientServer = (port) => {
             res.end(data);
           }
         });
+        break
+      case '/public/clientSetting.json':
+        const clientSettingUrl = path.join(__dirname, '../public/clientSetting.json')
+        // clientSetting.json の更新時
+        if (req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            console.log('request body: ', body)
+            fs.writeFile(clientSettingUrl, body, (err) => {
+              if (!err) {
+                res.writeHead(200);
+                res.end();
+              } else {
+                console.log(err)
+              }
+            });
+          })
+        }
+        if (req.method === 'GET') {
+          fs.readFile(clientSettingUrl, (err, data) => {
+            if (!err) {
+              res.writeHead(200, {"Content-Type": 'application/json'});
+              res.end(data);
+            } else {
+              const resSetting = JSON.stringify(initialSetting)
+              fs.writeFile(clientSettingUrl, resSetting, (err) => {
+                if (!err) {
+                  res.writeHead(200, {"Content-Type": 'application/json' });
+                  res.end(resSetting);
+                } else {
+                  console.log(err)
+                }
+              });
+            }
+          });
+        }
         break
       default:
         const url = path.join(__dirname, '../public', req.url)

@@ -1,27 +1,53 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import useTouch, { message } from './useTouch'
+  import useWebRTC from '../../lib/webRTC'
+  import useSetting, { controlStyles, windowStyle } from './useSetting'
+  import TabletControl from './TabletControl.svelte'
 
-  let container: HTMLDivElement
-  export let ws: WebSocket
-
+  let remoteVideo: HTMLVideoElement
+  let ws: WebSocket
+  const {
+    hangUp,
+    setupWS,
+    playVideo,
+    connectHost,
+  } = useWebRTC(async (s) => {
+    await playVideo(remoteVideo, s)
+  })
+  const { init } = useSetting()
   onMount(() => {
-    const { init } = useTouch(ws)
-    init(container)
+    init()
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      ws = setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
+    } else {
+      ws = setupWS({ privateIP: location.hostname, browserPort: 2401 })
+    }
   })
 </script>
 
 <style>
   .container {
+    position: relative;
     user-select: none;
-    background-color: red;
-    width: 500px;
-    height: 300px;
+    width: 100%;
+    height: 100%;
+  }
+  .window {
+    z-index: -1;
   }
 </style>
 
-<!-- svelte-ignore a11y-media-has-caption -->
-<div bind:this="{container}" class="container">
-</div>
 
-<div>{$message}</div>
+<div class="container">
+  <div class="btnContainer">
+    <button type="button" on:click="{connectHost}">Connect</button>
+    <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
+  </div>
+  {#if ws}
+    {#each $controlStyles as controlStyle}
+      <TabletControl {ws} {controlStyle} />
+    {/each}
+  {/if}
+  <!-- svelte-ignore a11y-media-has-caption -->
+  <video bind:this="{remoteVideo}" autoplay style="{$windowStyle}" class="window"></video>
+</div>

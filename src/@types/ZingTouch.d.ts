@@ -130,7 +130,17 @@ interface TapData {
   }[]
 }
 
+interface DistanceData {
+  center: {
+    x: number
+    y: number
+  }
+  change: number
+  distance: number
+}
+
 type SwipeEvent = CustomEvent<SwipeData>
 type PanEvent = CustomEvent<PanData>
 type TapEvent = CustomEvent<TapData>
+type DistanceEvent = CustomEvent<DistanceData>
 
