@@ -9,6 +9,9 @@ const useTemplate = () => {
   const region: Region = new ZingTouch.Region(document.body, true, true);
   const rects: { x: number, y: number, width: number, height: number }[] = []
   const distanceCenters: { x: number, y: number }[] = []
+  const translates: { x: number, y: number }[] = []
+  const elements: (null | HTMLElement)[] = Array(Object.values(ControlType).length).map(_ => null)
+  let isDragging = Array(Object.values(ControlType).length).map(_ => false)
 
   const init = () => {
     const initialControls :Control[] = []
@@ -36,6 +39,10 @@ const useTemplate = () => {
         x: 0,
         y: 0
       })
+      translates.push({
+        x: 0,
+        y: 0
+      })
     }
     controls.set(initialControls)
   }
@@ -44,21 +51,41 @@ const useTemplate = () => {
       console.error('not initialize')
       return
     }
+    elements[type] = ele
 
-    region.bind(ele, 'pan', (e: PanEvent) => {
-      if (e.detail.data.length === 0) {
+    const onPanStart = (inputs: ZingInput[]) => {
+      if (inputs.length === 0) {
+        console.error('pan start error')
         return
       }
-      console.log('move')
-      const data = e.detail.data[0]
+      const initial = inputs[0].initial
+      isDragging = Array(Object.values(ControlType).length).map(_ => false)
+      rects.forEach((rect, i) => {
+        if (rect.x < initial.x && initial.x < rect.x + rect.width && rect.y < initial.y && initial.y < rect.y + rect.height) {
+          isDragging[i] = true
+        }
+      })
+    }
 
-      rects[type].x += data.change.x
-      rects[type].y += data.change.y
+    const onPanMove = (inputs: ZingInput[], state: any, element: HTMLElement, output: PanData) => {
+      if (!output || output.data.length === 0) {
+        return
+      }
+      const draggingIndex = isDragging.findIndex(v => v === true)
+      if (draggingIndex === -1) {
+        return
+      }
+      const data = output.data[0]
+      rects[draggingIndex].x += data.change.x
+      rects[draggingIndex].y += data.change.y
       const prev: Control[] = get(controls)
-      prev[type].rect.start.x = `${rects[type].x}px`
-      prev[type].rect.start.y = `${rects[type].y}px`
+      prev[draggingIndex].rect.start.x = `${rects[draggingIndex].x}px`
+      prev[draggingIndex].rect.start.y = `${rects[draggingIndex].y}px`
       controls.set(prev)
-    })
+    }
+
+    const customPan = new ZingTouch.Pan({ onStart: onPanStart, onMove: onPanMove })
+    region.bind(document.body, customPan, () => {})
   
     const onDistanceStart = (inputs: ZingInput[], state: any, element: HTMLElement) => {
       console.log('distance move')
@@ -88,8 +115,6 @@ const useTemplate = () => {
         rects[type].width += change1.x + change2.x
         rects[type].height += change1.y + change2.y
       }
-      // // ele.style.transform = ele.style.transform.replace(getScale(), '')
-      // ele.style.transform += getScale()
       const prev: Control[] = get(controls)
       prev[type].rect.start.x = `${rects[type].x}px`
       prev[type].rect.start.y = `${rects[type].y}px`
@@ -102,21 +127,6 @@ const useTemplate = () => {
   }
   return { init, setupHandler }
 };
-
-const getXYFromTransform = (str: string) => {
-  const arr = str.split(' ')
-  const res = { x: 0, y: 0 }
-  for (const v of arr) {
-    const content = v.slice(10, -3)
-    if (v.startsWith('translateX')) {
-      res.x = Number(content)
-    }
-    if (v.startsWith('translateY')) {
-      res.y = Number(content)
-    }
-  }
-  return res
-}
 
 const getChange = (center: { x: number, y: number }, input: ZingInput) => {
   return {

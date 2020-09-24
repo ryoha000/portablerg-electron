@@ -13,7 +13,6 @@
 
   let width: number
   let containerHeight = 0
-  let style = ''
 
   const { update } = useSetting()
   const { init, setupHandler } = useTemplate()
@@ -50,11 +49,6 @@
     width: 100%;
     height: 100%;
     background-color: white;
-  }
-  .headerContainer {
-    display: flex;
-    width: 100%;
-    height: 5rem;
   }
   .headerItem {
     background-color: rgba(0, 0, 0, 0.1);
