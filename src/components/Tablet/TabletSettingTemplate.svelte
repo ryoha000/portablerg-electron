@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import useSetting, { windowStyle, controlsStyle, getStyleFromRect, ControlType } from './useSetting'
-  import useTemplate, { controls } from './useTemplate'
+  import { onMount, createEventDispatcher } from 'svelte';
+  import { get } from 'svelte/store';
+  import useSetting, { getStyleFromRect, ControlType } from './useSetting'
+  import useTemplate, { controls, init } from './useTemplate'
 
+  let container: HTMLElement
   let elements: any = {
     '0': null,
     '1': null,
@@ -10,21 +12,33 @@
     '3': null,
     '4': null
   }
+  let button :HTMLElement
 
   let width: number
-  let containerHeight = 0
+  const RATIO = 16 / 9
+  let containerHeight = window.innerWidth / RATIO
+
+  init()
 
   const { update } = useSetting()
-  const { init, setupHandler } = useTemplate()
-  init()
+  const dispatch = createEventDispatcher();
   onMount(() => {
-    const RATIO = 16 / 9
-    containerHeight = width / RATIO
+    const { setupHandler, addControl, setButton } = useTemplate(container)
+    console.log(width)
+    console.log(containerHeight)
+    console.log(get(controls))
     for (const type of Object.values(ControlType)) {
+      console.log(elements[`${type}`])
       if (elements[`${type}`] !== null) {
         setupHandler(elements[`${type}`], type)
       }
     }
+    const confirm = async () => {
+      addControl()
+      await update()
+      dispatch('close');
+    }
+    setButton(button, confirm)
   })
   const getKeyName = (type: ControlType) => {
     switch (type) {
@@ -49,6 +63,9 @@
     width: 100%;
     height: 100%;
     background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .headerItem {
     background-color: rgba(0, 0, 0, 0.1);
@@ -58,6 +75,7 @@
   .controls {
     z-index: 7;
     width: 100%;
+    margin-top: 160px;
     background-color: rgba(255, 0, 0, 0.5);
   }
   .center {
@@ -67,16 +85,22 @@
     font-size: 1.5rem;
   }
   .confirm {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: auto;
+    margin-bottom: 8rem;
+    z-index: 999999;
+    width: 8rem;
+    height: 2rem;
+    line-height: 2rem;
+    border-radius: 1rem;
+    border: black solid 1px;
+    text-align: center;
+    font-size: 1.8rem;
   }
 </style>
 
 <svelte:window bind:innerWidth="{width}" />
 
-<div class="container">
+<div class="container" bind:this="{container}">
   {#each $controls as control}
     <div
       class="center headerItem"
@@ -86,6 +110,6 @@
       <span>{getKeyName(control.type)}</span>
     </div>
   {/each}
-  <div style="height: {containerHeight};" class="controls center"><span>コントロール</span></div>
-  <button type="button" on:click="{update}" class="confirm">確定</button>
+  <div style="height: {containerHeight}px;" class="controls center"><span>コントロール</span></div>
+  <div class="confirm" bind:this="{button}">確定</div>
 </div>

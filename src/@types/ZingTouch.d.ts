@@ -61,7 +61,7 @@ class Region {
   bind(
     element: HTMLElement,
     gesture: 'swipe' | 'pan' | 'tap' | 'pinch' | 'expand' | Gesture | any,
-    handler: (e: CustomEvent<ActionEvent>) => void,
+    handler: (e: CustomEvent<ActionEvent>) => void | Promise<void>,
     capture?: boolean,
     bindOnce?:boolean
   ): void;

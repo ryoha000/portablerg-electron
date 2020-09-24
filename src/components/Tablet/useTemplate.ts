@@ -1,51 +1,51 @@
 import ZingTouch from '../../lib/ZingTouch/ZingTouch'
-import { TabletSetting, Rect, ControlType, Control, ControlStyle } from './useSetting'
+import { ControlType, Control, setting, TabletSetting } from './useSetting'
 import { get, writable } from 'svelte/store'
 
 export const controls = writable<Control[]>([])
 
+export const init = () => {
+  const initialControls :Control[] = []
+  for (const type of Object.values(ControlType)) {
+    initialControls.push({
+      rect: {
+        start: {
+          x: `${REM * 6 * type + REM}px`,
+          y: '0px'
+        },
+        width: `${5 * REM}px`,
+        height: `${5 * REM}px`
+      },
+      color: [0, 0, 0, 0.1],
+      type: type,
+      zIndex: 1
+    })
+  }
+  controls.set(initialControls)
+}
+
 const REM = 16
-const useTemplate = () => {
-  const region: Region = new ZingTouch.Region(document.body, true, true);
+const useTemplate = (container: HTMLElement) => {
+  const region: Region = new ZingTouch.Region(container, true, true);
   const rects: { x: number, y: number, width: number, height: number }[] = []
   const distanceCenters: { x: number, y: number }[] = []
-  const translates: { x: number, y: number }[] = []
   const elements: (null | HTMLElement)[] = Array(Object.values(ControlType).length).map(_ => null)
   let isDragging = Array(Object.values(ControlType).length).map(_ => false)
 
-  const init = () => {
-    const initialControls :Control[] = []
-    for (const type of Object.values(ControlType)) {
-      initialControls.push({
-        rect: {
-          start: {
-            x: `${REM * 6 * type + REM}px`,
-            y: '0px'
-          },
-          width: `${5 * REM}px`,
-          height: `${5 * REM}px`
-        },
-        color: [0, 0, 0, 0.1],
-        type: type,
-        zIndex: 1
-      })
-      rects.push({
-        x: REM * 6 * type + REM,
-        y: 0,
-        width: 5 * REM,
-        height: 5 * REM
-      })
-      distanceCenters.push({
-        x: 0,
-        y: 0
-      })
-      translates.push({
-        x: 0,
-        y: 0
-      })
-    }
-    controls.set(initialControls)
+  for (const type of Object.values(ControlType)) {
+    rects.push({
+      x: REM * 6 * type + REM,
+      y: 0,
+      width: 5 * REM,
+      height: 5 * REM
+    })
+    distanceCenters.push({
+      x: 0,
+      y: 0
+    })
   }
+
+
   const setupHandler = (ele: HTMLElement, type: ControlType) => {
     if (rects.length < 4) {
       console.error('not initialize')
@@ -85,7 +85,7 @@ const useTemplate = () => {
     }
 
     const customPan = new ZingTouch.Pan({ onStart: onPanStart, onMove: onPanMove })
-    region.bind(document.body, customPan, () => {})
+    region.bind(container, customPan, () => {})
   
     const onDistanceStart = (inputs: ZingInput[], state: any, element: HTMLElement) => {
       console.log('distance move')
@@ -125,7 +125,42 @@ const useTemplate = () => {
     const customDistance: Distance = new ZingTouch.Distance({ onStart: onDistanceStart, onMove: onDistanceMove })
     region.bind(ele, customDistance, () => {})
   }
-  return { init, setupHandler }
+  const addControl = () => {
+    const prev: TabletSetting = get(setting)
+    let maxID = -1
+    for (const c of prev.controlTemplates) {
+      if (c.id > maxID) {
+        maxID = c.id
+      }
+    }
+    prev.controlTemplates.push({
+      id: maxID + 1,
+      controls: get(controls)
+    })
+    setting.set(prev)
+  }
+  const setButton = (ele: HTMLElement, callback: () => Promise<void>) => {
+    const rect = ele.getBoundingClientRect()
+
+    const onTapEnd = (inputs: ZingInput[], timing: TapData) => {
+      if (inputs.length === 0) {
+        console.error('no tap information')
+        return
+      }
+      const input = inputs[0]
+      if (rect.x < input.current.x && input.current.x < rect.x + rect.width && rect.y < input.current.y && input.current.y < rect.y + rect.height) {
+        callback()
+      }
+    }
+
+    const customTap: Tap = new ZingTouch.Tap({ onEnd: onTapEnd })
+
+    region.bind(container, customTap, () => {})
+  }
+  const dispose = () => {
+    region.unbind(container)
+  }
+  return { setupHandler, addControl, setButton, dispose }
 };
 
 const getChange = (center: { x: number, y: number }, input: ZingInput) => {

@@ -41,6 +41,10 @@
       isOpenTemplateSetting = true
     }
   }
+  const closeSetting = () => {
+    isOpenTemplateSetting = false
+    isOpenLayoutSetting = false
+  }
 </script>
 
 <style>
@@ -78,12 +82,12 @@
   </div>
   {#if isOpenLayoutSetting}
     <div class="setting" on:click="{stop}">
-      <TabletSettingLayout />
+      <TabletSettingLayout on:close="{closeSetting}" />
     </div>
   {/if}
   {#if isOpenTemplateSetting}
     <div class="setting" on:click="{stop}">
-      <TabletSettingTemplate />
+      <TabletSettingTemplate on:close="{closeSetting}" />
     </div>
   {/if}
   {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting}

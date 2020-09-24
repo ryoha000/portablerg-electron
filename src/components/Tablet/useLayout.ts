@@ -1,105 +1,146 @@
 import ZingTouch from '../../lib/ZingTouch/ZingTouch'
-import { setting, TabletSetting, Rect } from './useSetting'
+import { TabletSetting, Rect, setting } from './useSetting'
 import { get } from 'svelte/store'
-import { getNumRect } from '../../lib/coordinary';
 
-const useLayout = (ele: HTMLElement, type: 'window' | 'controls' | number) => {
-  let rect = { x: 0, y: 0, width: 0, height: 0 }
-  const base: TabletSetting = get(setting)
-  if (type === 'window') {
-    rect = getNumRect(base.window.rect)
-  }
-  if (type === 'controls') {
-    rect = getNumRect(base.controlRect)
-  }
-  let distanceCenter = { x: 0, y: 0 }
-  console.log(rect)
+export type LayoutType = typeof LayoutType[keyof typeof LayoutType]
 
-  const region: Region = new ZingTouch.Region(document.body, true, true);
-  region.bind(ele, 'pan', (e: PanEvent) => {
-    if (e.detail.data.length === 0) {
-      return
-    }
-    console.log('move')
-    const data = e.detail.data[0]
+export const LayoutType = {
+  window: 0,
+  control: 1
+} as const
 
-    rect.x += data.change.x
-    rect.y += data.change.y
-    const prev: TabletSetting = get(setting)
-    if (type === 'window') {
-      prev.window.rect.start.x = `${rect.x}px`
-      prev.window.rect.start.y = `${rect.y}px`
-    }
-    if (type === 'controls') {
-      prev.controlRect.start.x = `${rect.x}px`
-      prev.controlRect.start.y = `${rect.y}px`
-    }
-    setting.set(prev)
-  })
+interface NumRect { x: number, y: number, width: number, height: number }
 
-  const onDistanceStart = (inputs: ZingInput[], state: any, element: HTMLElement) => {
-    console.log('distance move')
-    if (inputs.length < 2) {
-      return
-    }
-    distanceCenter = {
-      x: (inputs[0].current.x + inputs[1].current.x) / 2,
-      y: (inputs[0].current.y + inputs[1].current.y) / 2,
+const useLayout = (container: HTMLElement) => {
+  const region: Region = new ZingTouch.Region(container, true, true);
+  const rects: NumRect[] = []
+  const distanceCenters: { x: number, y: number }[] = []
+  const elements: (null | HTMLElement)[] = Array(Object.values(LayoutType).length).map(_ => null)
+  let isDragging = Array(Object.values(LayoutType).length).map(_ => false)
+
+  const init = () => {
+    const s: TabletSetting = get(setting)
+    for (const type of Object.values(LayoutType)) {
+      if (type === LayoutType.window) {
+        rects[type] = getNumRect(s.window.rect)
+      }
+      if (type === LayoutType.control) {
+        rects[type] = getNumRect(s.controlRect)
+      }
+      distanceCenters.push({
+        x: 0,
+        y: 0
+      })
     }
   }
-  const onDistanceMove = (inputs: ZingInput[], state: any, element: HTMLElement, movement: DistanceData) => {
-    console.log('distance move')
-    if (!movement || inputs.length < 2) {
-      return
+  const setupHandler = (ele: HTMLElement, type: LayoutType) => {
+    elements[type] = ele
+
+    const onPanStart = (inputs: ZingInput[]) => {
+      if (inputs.length === 0) {
+        console.error('pan start error')
+        return
+      }
+      const initial = inputs[0].initial
+      isDragging = Array(Object.values(LayoutType).length).map(_ => false)
+      rects.forEach((rect, i) => {
+        if (rect.x < initial.x && initial.x < rect.x + rect.width && rect.y < initial.y && initial.y < rect.y + rect.height) {
+          isDragging[i] = true
+        }
+      })
     }
-    const change1 = getChange(distanceCenter, inputs[0])
-    const change2 = getChange(distanceCenter, inputs[1])
-    if (inputs[0].current.x < inputs[1].current.x) {
-      rect.x -= change1.x
-      rect.y -= change1.y
-      rect.width += change1.x + change2.x
-      rect.height += change1.y + change2.y
-    } else {
-      rect.x -= change2.x
-      rect.y -= change2.y
-      rect.width += change1.x + change2.x
-      rect.height += change1.y + change2.y
+
+    const onPanMove = (inputs: ZingInput[], state: any, element: HTMLElement, output: PanData) => {
+      if (!output || output.data.length === 0) {
+        return
+      }
+      const draggingIndex = isDragging.findIndex(v => v === true)
+      if (draggingIndex === -1) {
+        return
+      }
+      const data = output.data[0]
+      rects[draggingIndex].x += data.change.x
+      rects[draggingIndex].y += data.change.y
+      const prev: TabletSetting = get(setting)
+      if (draggingIndex === LayoutType.window) {
+        prev.window.rect = getRect(rects[draggingIndex])
+      }
+      if (draggingIndex === LayoutType.control) {
+        prev.controlRect = getRect(rects[draggingIndex])
+      }
+      setting.set(prev)
     }
-    // // ele.style.transform = ele.style.transform.replace(getScale(), '')
-    console.log(change1, change2)
-    // ele.style.transform += getScale()
-    const prev: TabletSetting = get(setting)
-    if (type === 'window') {
-      prev.window.rect.start.x = `${rect.x}px`
-      prev.window.rect.start.y = `${rect.y}px`
-      prev.window.rect.width = `${rect.width}px`
-      prev.window.rect.height = `${rect.height}px`
+
+    const customPan = new ZingTouch.Pan({ onStart: onPanStart, onMove: onPanMove })
+    region.bind(container, customPan, () => {})
+  
+    const onDistanceStart = (inputs: ZingInput[], state: any, element: HTMLElement) => {
+      console.log('distance move')
+      if (inputs.length < 2) {
+        return
+      }
+      distanceCenters[type] = {
+        x: (inputs[0].current.x + inputs[1].current.x) / 2,
+        y: (inputs[0].current.y + inputs[1].current.y) / 2,
+      }
     }
-    if (type === 'controls') {
-      prev.controlRect.start.x = `${rect.x}px`
-      prev.controlRect.start.y = `${rect.y}px`
-      prev.controlRect.width = `${rect.width}px`
-      prev.controlRect.height = `${rect.height}px`
+    const onDistanceMove = (inputs: ZingInput[], state: any, element: HTMLElement, movement: DistanceData) => {
+      console.log('distance move')
+      if (!movement || inputs.length < 2) {
+        return
+      }
+      const change1 = getChange(distanceCenters[type], inputs[0])
+      const change2 = getChange(distanceCenters[type], inputs[1])
+      if (inputs[0].current.x < inputs[1].current.x) {
+        rects[type].x -= change1.x
+        rects[type].y -= change1.y
+        rects[type].width += change1.x + change2.x
+        rects[type].height += change1.y + change2.y
+      } else {
+        rects[type].x -= change2.x
+        rects[type].y -= change2.y
+        rects[type].width += change1.x + change2.x
+        rects[type].height += change1.y + change2.y
+      }
+      const prev: TabletSetting = get(setting)
+      if (type === LayoutType.window) {
+        prev.window.rect = getRect(rects[type])
+      }
+      if (type === LayoutType.control) {
+        prev.controlRect = getRect(rects[type])
+      }
+      setting.set(prev)
     }
-    setting.set(prev)
+    const customDistance: Distance = new ZingTouch.Distance({ onStart: onDistanceStart, onMove: onDistanceMove })
+    region.bind(ele, customDistance, () => {})
   }
-  const customDistance: Distance = new ZingTouch.Distance({ onStart: onDistanceStart, onMove: onDistanceMove })
-  region.bind(ele, customDistance, () => {})
+  const setButton = (ele: HTMLElement, callback: () => Promise<void>) => {
+    const rect = ele.getBoundingClientRect()
+
+    const onTapEnd = (inputs: ZingInput[], timing: TapData) => {
+      if (inputs.length === 0) {
+        console.error('no tap information')
+        return
+      }
+      const input = inputs[0]
+      if (rect.x < input.current.x && input.current.x < rect.x + rect.width && rect.y < input.current.y && input.current.y < rect.y + rect.height) {
+        callback()
+      }
+    }
+
+    const customTap: Tap = new ZingTouch.Tap({ onEnd: onTapEnd })
+
+    region.bind(container, customTap, () => {})
+  }
+  const dispose = () => {
+    region.unbind(container)
+  }
+  return { init, setupHandler, setButton, dispose }
 };
 
-const getXYFromTransform = (str: string) => {
-  const arr = str.split(' ')
-  const res = { x: 0, y: 0 }
-  for (const v of arr) {
-    const content = v.slice(10, -3)
-    if (v.startsWith('translateX')) {
-      res.x = Number(content)
-    }
-    if (v.startsWith('translateY')) {
-      res.y = Number(content)
-    }
-  }
-  return res
+export const setTouch = (ele: HTMLElement, callback: () => Promise<void>) => {
+  const region: Region = new ZingTouch.Region(ele, true, true)
+  region.bind(ele, 'tap', callback)
 }
 
 const getChange = (center: { x: number, y: number }, input: ZingInput) => {
@@ -107,6 +148,37 @@ const getChange = (center: { x: number, y: number }, input: ZingInput) => {
     x: Math.abs(input.current.x - center.x) - Math.abs(input.previous.x - center.x),
     y: Math.abs(input.current.y - center.y) - Math.abs(input.previous.y - center.y)
   }
+}
+
+const getNumRect = (rect: Rect) => {
+  return {
+    x: conversionPX(rect.start.x, window?.innerWidth),
+    y: conversionPX(rect.start.y, window?.innerHeight),
+    width: conversionPX(rect.width, window?.innerWidth),
+    height: conversionPX(rect.height, window?.innerHeight)
+  }
+}
+
+const getRect = (numRect: NumRect): Rect => {
+  return {
+    start: {
+      x: `${numRect.x}px`,
+      y: `${numRect.y}px`
+    },
+    width: `${numRect.width}px`,
+    height: `${numRect.height}px`
+  }
+}
+
+const conversionPX = (str: string, base?: number) => {
+  if (str.endsWith('px')) {
+    return Number(str.replace('px', ''))
+  }
+  if (str.endsWith('%')) {
+    if (!base) return 500
+    return base * Number(str.replace('%', '')) / 100
+  }
+  return 0
 }
 
 export default useLayout
