@@ -15,20 +15,22 @@ interface ControlTemplate {
   controls: Control[]
 }
 
-interface Control {
+export interface Control {
   rect: Rect
   color: RGBA
   zIndex: number
   type: ControlType
 }
 
-export enum ControlType {
-  Panel,
-  Scroller,
-  Enter,
-  Up,
-  Down
-}
+export type ControlType = typeof ControlType[keyof typeof ControlType]
+
+export const ControlType = {
+  Panel: 0,
+  Scroll: 1,
+  Enter: 2,
+  Up: 3,
+  Down: 4,
+} as const
 
 export interface Rect {
   width: string
@@ -83,7 +85,7 @@ export const controlStyles = derived(setting, ($setting) => {
   return res
 })
 
-const getStyleFromRect = (rect: Rect) => {
+export const getStyleFromRect = (rect: Rect) => {
   return `
     width: ${rect.width}; height: ${rect.height}; left: ${rect.start.x}; top: ${rect.start.y};
   `

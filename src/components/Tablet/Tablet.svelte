@@ -4,10 +4,13 @@
   import useSetting, { controlStyles, windowStyle } from './useSetting'
   import TabletControl from './TabletControl.svelte'
   import TabletSettingLayout from './TabletSettingLayout.svelte'
+  import TabletSettingTemplate from './TabletSettingTemplate.svelte'
 
   let remoteVideo: HTMLVideoElement
   let ws: WebSocket
   let isOpenLayoutSetting = false
+  let isOpenTemplateSetting = false
+
   const {
     hangUp,
     setupWS,
@@ -27,6 +30,16 @@
   })
   const stop = (e: MouseEvent) => {
     e.stopPropagation()
+  }
+  const openSetting = (type: 'layout' | 'template') => {
+    isOpenTemplateSetting = false
+    isOpenLayoutSetting = false
+    if (type === 'layout') {
+      isOpenLayoutSetting = true
+    }
+    if (type === 'template') {
+      isOpenTemplateSetting = true
+    }
   }
 </script>
 
@@ -60,14 +73,20 @@
   <div class="btnContainer">
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
-    <button type="button" on:click="{() => isOpenLayoutSetting = !isOpenLayoutSetting}">open layout setting</button>
+    <button type="button" on:click="{() => openSetting('layout')}">open layout setting</button>
+    <button type="button" on:click="{() => openSetting('template')}">open template setting</button>
   </div>
   {#if isOpenLayoutSetting}
     <div class="setting" on:click="{stop}">
       <TabletSettingLayout />
     </div>
   {/if}
-  {#if ws && !isOpenLayoutSetting}
+  {#if isOpenTemplateSetting}
+    <div class="setting" on:click="{stop}">
+      <TabletSettingTemplate />
+    </div>
+  {/if}
+  {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting}
     {#each $controlStyles as controlStyle}
       <TabletControl {ws} {controlStyle} />
     {/each}

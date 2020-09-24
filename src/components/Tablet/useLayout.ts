@@ -1,6 +1,7 @@
 import ZingTouch from '../../lib/ZingTouch/ZingTouch'
 import { setting, TabletSetting, Rect } from './useSetting'
 import { get } from 'svelte/store'
+import { getNumRect } from '../../lib/coordinary';
 
 const useLayout = (ele: HTMLElement, type: 'window' | 'controls' | number) => {
   let rect = { x: 0, y: 0, width: 0, height: 0 }
@@ -107,26 +108,5 @@ const getChange = (center: { x: number, y: number }, input: ZingInput) => {
     y: Math.abs(input.current.y - center.y) - Math.abs(input.previous.y - center.y)
   }
 }
-
-const getNumRect = (rect: Rect) => {
-  return {
-    x: conversionPX(rect.start.x, window?.innerWidth),
-    y: conversionPX(rect.start.y, window?.innerHeight),
-    width: conversionPX(rect.width, window?.innerWidth),
-    height: conversionPX(rect.height, window?.innerHeight)
-  }
-}
-
-const conversionPX = (str: string, base?: number) => {
-  if (str.endsWith('px')) {
-    return Number(str.replace('px', ''))
-  }
-  if (str.endsWith('%')) {
-    if (!base) return 500
-    return base * Number(str.replace('%', '')) / 100
-  }
-  return 0
-}
-
 
 export default useLayout

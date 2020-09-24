@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import useSetting, { windowStyle, controlsStyle, setting } from './useSetting'
+  import useSetting, { windowStyle, controlsStyle } from './useSetting'
   import useLayout from './useLayout'
 
   let windowElement: HTMLElement
