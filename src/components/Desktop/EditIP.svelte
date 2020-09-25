@@ -22,7 +22,6 @@
     if (event.target.valueAsNumber < 0) {
       splited[index] = '0'
     }
-    console.log(event.target.valueAsNumber)
   }
   const reset = () => {
     dispatch('reset');

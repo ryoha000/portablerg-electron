@@ -1,15 +1,25 @@
 <script lang="ts">
   import { controlsStyle, ControlType } from './useSetting'
   import Panel from './Controls/Panel.svelte'
+  import { createEventDispatcher } from 'svelte';
+import { get } from 'svelte/store';
 
   export let controlStyle: {
-  id: number
-  controls: {
-    type: ControlType
-    style: string
-  }[]
-}
+    id: number
+    controls: {
+      type: ControlType
+      style: string
+    }[]
+  }
   export let ws: WebSocket
+  
+  const dispatch = createEventDispatcher();
+  const trans = (num: 1 | -1) => {
+    console.log('trans')
+    dispatch('trans', {
+      num: num
+    });
+  }
 </script>
 
 <style>
@@ -39,8 +49,8 @@
       {/each}
     </div>
     <div class="btnContainer">
-      <button type="button">left</button>
-      <button type="button">right</button>
+      <button type="button" on:click="{() => trans(-1)}">left</button>
+      <button type="button" on:click="{() => trans(1)}">right</button>
     </div>
   </div>
 {/if}

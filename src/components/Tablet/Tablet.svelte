@@ -1,15 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import useWebRTC from '../../lib/webRTC'
-  import useSetting, { controlStyles, windowStyle } from './useSetting'
+  import useSetting, { controlStyles, ControlType, windowStyle } from './useSetting'
   import TabletControl from './TabletControl.svelte'
   import TabletSettingLayout from './TabletSettingLayout.svelte'
   import TabletSettingTemplate from './TabletSettingTemplate.svelte'
+  import { get } from 'svelte/store';
 
   let remoteVideo: HTMLVideoElement
   let ws: WebSocket
   let isOpenLayoutSetting = false
   let isOpenTemplateSetting = false
+  let id = 0
 
   const {
     hangUp,
@@ -45,6 +47,39 @@
     isOpenTemplateSetting = false
     isOpenLayoutSetting = false
   }
+  const setID = async (e: CustomEvent<{ num: 1 | -1}>) => {
+    const tmp: {
+      id: number
+      controls: {
+        type: ControlType
+        style: string
+      }[]
+    }[] = get(controlStyles)
+    const nowIndex = tmp.findIndex(v => v.id === id)
+    if (nowIndex === -1) {
+      if (tmp.length === 0) {
+        alert('コントロールが登録されていません')
+        return
+      }
+      id = tmp[0].id
+      return
+    }
+    // 右端の時
+    if (nowIndex + 1 === tmp.length) {
+      if (e.detail.num === 1) {
+        id = tmp[0].id
+        return
+      }
+    }
+    // 左端の時
+    if (nowIndex === 0) {
+      if (e.detail.num === -1) {
+        id = tmp[tmp.length - 1].id
+        return
+      }
+    }
+    id = tmp[nowIndex + e.detail.num].id
+	}
 </script>
 
 <style>
@@ -92,7 +127,9 @@
   {/if}
   {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting}
     {#each $controlStyles as controlStyle}
-      <TabletControl {ws} {controlStyle} />
+      {#if controlStyle.id === id}
+        <TabletControl {ws} {controlStyle} on:trans="{setID}" />
+      {/if}
     {/each}
     <!-- svelte-ignore a11y-media-has-caption -->
     <video bind:this="{remoteVideo}" autoplay style="{$windowStyle}" class="window"></video>
