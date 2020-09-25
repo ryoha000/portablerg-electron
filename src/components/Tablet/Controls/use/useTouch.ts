@@ -1,4 +1,4 @@
-import ZingTouch from '../../lib/ZingTouch/ZingTouch'
+import ZingTouch from "../../../../lib/ZingTouch/ZingTouch";
 import { writable, get } from 'svelte/store';
 
 export const message = writable('')
@@ -15,10 +15,9 @@ const useTouch = (ws: WebSocket) => {
   let tapPos = { x: 0, y: 0 }
   let timer: NodeJS.Timeout | null = null
   let dPosBuf: { x: number, y: number }[] = []
+  const region: Region = new ZingTouch.Region(document.body);
 
   const init = (ele: HTMLElement) => {
-    const region: Region = new ZingTouch.Region(document.body);
-
     setupDrag(region)
     region.bind(ele, 'dragPan', () => {})
     region.bind(ele, 'tap', (e: TapEvent) => {
@@ -56,6 +55,11 @@ const useTouch = (ws: WebSocket) => {
       }
     })
   };
+  const dispose = (...elements: HTMLElement[]) => {
+    for (const ele of elements) {
+      region.unbind(ele)
+    }
+  }
 
   const setupDrag = (region: Region) => {
     const dragPan: Pan = new ZingTouch.Pan({ threshold: ALLOW_DRAG_START_RADIUS, onStart: panStart, onMove: panMove, onEnd: panEnd })
@@ -141,7 +145,7 @@ const useTouch = (ws: WebSocket) => {
       dPoint: dPoint
     }))
   }
-  return { init };
+  return { init, dispose };
 };
 
 export default useTouch

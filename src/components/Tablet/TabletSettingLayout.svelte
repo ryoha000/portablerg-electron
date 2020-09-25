@@ -66,5 +66,5 @@
 <div class="container" bind:this="{container}">
   <div style="{$windowStyle}" class="window center" bind:this="{windowElement}"><span>Window</span></div>
   <div style="{$controlsStyle}" class="controls center" bind:this="{controlsElement}"><span>コントロール</span></div>
-  <div class="confirm" on:click="{confirm}" bind:this="{button}">確定</div>
+  <div class="confirm" bind:this="{button}">確定</div>
 </div>

@@ -50,9 +50,7 @@
   <div class="container" style="{$controlsStyle}">
     <div class="controls">
       {#each controlStyle.controls as control}
-        {#if control.type === ControlType.Panel}
-          <Panel {ws} style="{control.style}" />
-        {/if}
+        <Panel {ws} style="{control.style}" type="{control.type}" />
       {/each}
     </div>
     <div class="btnContainer">

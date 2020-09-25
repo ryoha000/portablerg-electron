@@ -46,11 +46,11 @@
     if (type === 'template') {
       isOpenTemplateSetting = true
     }
-    e.stopPropagation()
+    stop(e)
   }
   const openToggleSetting = (e: MouseEvent) => {
     isOpenToggleSetting = true
-    e.stopPropagation()
+    stop(e)
   }
   const closeSetting = () => {
     isOpenToggleSetting = false
@@ -145,8 +145,6 @@
   <div class="btnContainer">
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
-    <!-- <button type="button" on:click="{() => openSetting('layout')}">open layout setting</button>
-    <button type="button" on:click="{() => openSetting('template')}">open template setting</button> -->
   </div>
   {#if isOpenLayoutSetting}
     <div class="setting" on:click="{stop}">
@@ -158,7 +156,7 @@
       <TabletSettingTemplate on:close="{closeSetting}" />
     </div>
   {/if}
-  {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting}
+  {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting && !isOpenToggleSetting}
     {#each $controlStyles as controlStyle}
       {#if controlStyle.id === id}
         <TabletControl {ws} {controlStyle} on:trans="{setID}" />
