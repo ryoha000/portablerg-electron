@@ -1,5 +1,5 @@
 {
-  "name": "portablerg-electron",
+  "name": "portablerg",
   "version": "1.0.0",
   "main": "src/index.js",
   "scripts": {
@@ -15,7 +15,9 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "icon": "public/icon.ico"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
