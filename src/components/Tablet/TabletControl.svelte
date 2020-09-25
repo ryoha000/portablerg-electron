@@ -57,10 +57,10 @@
     </div>
     <div class="btnContainer">
       <div class="button" on:click="{() => trans(-1)}">
-        <Icon name="chevron-left" size="{24}" />
+        <Icon name="chevron-left" size="{32}" />
       </div>
       <div class="button buttonRight" on:click="{() => trans(1)}">
-        <Icon name="chevron-right" size="{24}" />
+        <Icon name="chevron-right" size="{32}" />
       </div>
     </div>
   </div>

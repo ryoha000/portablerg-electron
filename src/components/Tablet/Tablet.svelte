@@ -6,9 +6,11 @@
   import TabletSettingLayout from './TabletSettingLayout.svelte'
   import TabletSettingTemplate from './TabletSettingTemplate.svelte'
   import { get } from 'svelte/store';
+  import Icon from '../UI/Icon.svelte'
 
   let remoteVideo: HTMLVideoElement
   let ws: WebSocket
+  let isOpenToggleSetting = false
   let isOpenLayoutSetting = false
   let isOpenTemplateSetting = false
   let id = 0
@@ -33,7 +35,9 @@
   const stop = (e: MouseEvent) => {
     e.stopPropagation()
   }
-  const openSetting = (type: 'layout' | 'template') => {
+  const openSetting = (type: 'layout' | 'template', e: MouseEvent) => {
+    console.log('open')
+    isOpenToggleSetting = false
     isOpenTemplateSetting = false
     isOpenLayoutSetting = false
     if (type === 'layout') {
@@ -42,8 +46,14 @@
     if (type === 'template') {
       isOpenTemplateSetting = true
     }
+    e.stopPropagation()
+  }
+  const openToggleSetting = (e: MouseEvent) => {
+    isOpenToggleSetting = true
+    e.stopPropagation()
   }
   const closeSetting = () => {
+    isOpenToggleSetting = false
     isOpenTemplateSetting = false
     isOpenLayoutSetting = false
   }
@@ -79,7 +89,7 @@
       }
     }
     id = tmp[nowIndex + e.detail.num].id
-	}
+  }
 </script>
 
 <style>
@@ -105,15 +115,38 @@
     position: absolute;
     z-index: 5;
   }
+  .settingButton {
+    padding: 16px;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: rgba(0, 0, 0, 0.2);
+  }
+  .settingContainer {
+    background-color: white;
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    /* padding: 1rem; */
+    z-index: 999999;
+    border: rgba(0, 0, 0, 0.7) solid 1px;
+  }
+  .settingItem {
+    border-bottom: rgba(0, 0, 0, 0.7) solid 1px;
+    padding: 1rem;
+  }
+  .settingItem:last-of-type {
+    border-bottom: 0;
+  }
 </style>
 
 
-<div class="container">
+<div class="container" on:click="{closeSetting}">
   <div class="btnContainer">
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
-    <button type="button" on:click="{() => openSetting('layout')}">open layout setting</button>
-    <button type="button" on:click="{() => openSetting('template')}">open template setting</button>
+    <!-- <button type="button" on:click="{() => openSetting('layout')}">open layout setting</button>
+    <button type="button" on:click="{() => openSetting('template')}">open template setting</button> -->
   </div>
   {#if isOpenLayoutSetting}
     <div class="setting" on:click="{stop}">
@@ -133,5 +166,15 @@
     {/each}
     <!-- svelte-ignore a11y-media-has-caption -->
     <video bind:this="{remoteVideo}" autoplay style="{$windowStyle}" class="window"></video>
+  {/if}
+  <div class="settingButton" on:click="{openToggleSetting}">
+    <Icon name="cog" size="{48}" />
+  </div>
+  {#if isOpenToggleSetting}
+    <div class="settingContainer">
+      <div class="settingItem" on:click="{(e) => openSetting('layout', e)}">レイアウトの設定を開く</div>
+      <div class="settingItem" on:click="{(e) => openSetting('template', e)}">コントロールのテンプレートを作る</div>
+      <div class="settingItem">コントロールのテンプレートを並び替える</div>
+    </div>
   {/if}
 </div>
