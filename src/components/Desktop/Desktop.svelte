@@ -9,6 +9,7 @@
 	import EditPort from './EditPort.svelte'
 	import type { Setting } from '../../@types/Original'
 	import { mouseInit } from '../../renderLogic'
+	import useWindow from "./useWindow";
 
 	let localVideo: HTMLVideoElement
 	let id: string
@@ -55,6 +56,11 @@
 		await resetSetting()
 		setting = await getSetting()
 	}
+	const select = async () => {
+		const sources = await useWindow()
+		console.log(sources)
+		await openDialog(sources)
+	}
 </script>
 
 <style>
@@ -83,7 +89,7 @@
 		<div>現在: {name ?? '未選択'}</div>
 		<div class="flexContainer">
 			<TextButton label="リセット" color="rgb(255, 0, 0)" />
-			<TextButton label="変更" on:click="{openDialog}" color="rgb(0, 80, 160)" />
+			<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 		</div>
 	</ColumnTemplate>
 	<ColumnTemplate label="このPCのPrivateIP">

@@ -7,8 +7,8 @@ try {
 } catch (e) {
 }
 
-export const openDialog = async () =>{
-  await ipc?.invoke('openDialog')
+export const openDialog = async (sources: { id: string, name: string, url: string }[]) =>{
+  await ipc?.invoke('openDialog', sources)
 }
 
 export const decideWindow = async (id: string, name: string) =>{
@@ -19,6 +19,13 @@ export const listenID = (callback: (id: string, name: string) => Promise<void>) 
   ipc?.on('id', async (e: unknown, id: string, name: string) => {
     console.log('id: ', id, 'name: ', name)
     await callback(id, name)
+  })
+}
+
+export const getSources = (callback: (sources: { id: string, name: string, url: string }[]) => void) => {
+  ipc?.on('sources', (e: unknown, sources: { id: string, name: string, url: string }[]) => {
+    console.log('sources: ', sources)
+    callback(sources)
   })
 }
 

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, remote } = require('electron');
 const path = require('path');
 const { setupWebSocketServer, setupClientServer } = require('./server')
 const { getPrivateIP, removePrevFireWall, addNewFireWall, getSetting, updateSetting, resetSetting } = require('./ipcHandlers')
@@ -45,10 +45,21 @@ const createWindow = async () => {
   mainWindow.webContents.openDevTools();
 
   let dialog
-  ipcMain.handle('openDialog', (e) => {
-    dialog = new BrowserWindow({ parent: mainWindow, modal: true, show: false, webPreferences: { nodeIntegration: true }, useContentSize: true })
-    dialog.loadFile(path.join(__dirname, '../public/index.html'));
+  ipcMain.handle('openDialog', (e, sources) => {
+    dialog = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
+    dialog.loadURL(`http://${setting.privateIP}:${setting.browserPort}/#/select`)
+    dialog.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
+    dialog.webContents.session.setPermissionCheckHandler(async (webContents, permission, details) => {
+      return true
+    })
+    dialog.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
+      callback(true)
+    })
     dialog.webContents.openDevTools()
+    setTimeout(() => {
+      console.log('send sources')
+      dialog.send('sources', sources)
+    }, 500);
     dialog.show('ready-to-show', () => dialog.show())
     return
   })

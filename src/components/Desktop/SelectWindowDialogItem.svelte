@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
-  export let candidate: Electron.DesktopCapturerSource
+  export let candidate: { id: string, name: string, url: string }
 
   const dispatch = createEventDispatcher();
 
@@ -46,6 +46,6 @@
 </style>
 
 <div on:click="{select}" class="container">
-  <img src="{candidate.thumbnail.toDataURL()}" alt="{candidate.name}" />
+  <img src="{candidate.url}" alt="{candidate.name}" />
   <div class="text">{candidate.name}</div>
 </div>
