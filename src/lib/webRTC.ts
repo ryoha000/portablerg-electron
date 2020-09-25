@@ -1,6 +1,6 @@
 import type { Setting } from '../@types/Original'
 import { writable, get } from 'svelte/store';
-import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging } from '../renderLogic'
+import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyTap } from '../renderLogic'
 
 const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   let localStream: null | MediaStream = null;
@@ -73,6 +73,17 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
         case 'dragging': {
           mouseDragging(message.dPoint)
           break
+        }
+        case 'enter': {
+          keyTap('enter')
+          break
+        }
+        case 'up': {
+          keyTap('up')
+          break
+        }
+        case 'down': {
+          keyTap('down')
         }
         default: { 
           console.log("Invalid message"); 

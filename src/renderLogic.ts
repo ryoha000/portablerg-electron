@@ -101,3 +101,7 @@ export const mouseClick = async () => {
   console.log('click from renderLogic')
   await ipc?.invoke('click')
 }
+
+export const keyTap = async (type: 'enter' | 'up' | 'down') => {
+  await ipc?.invoke('keyTap', type)
+}

@@ -3,6 +3,7 @@ const path = require('path');
 const { setupWebSocketServer, setupClientServer } = require('./server')
 const { getPrivateIP, removePrevFireWall, addNewFireWall, getSetting, updateSetting, resetSetting } = require('./ipcHandlers')
 const { useMouse } = require('./useMouse')
+const { useKeyboard } = require('./useKeyboard')
 
 // Live Reload
 require('electron-reload')(__dirname, {
@@ -127,6 +128,11 @@ const createWindow = async () => {
     click();
     return;
   });
+  const { keyTap } = useKeyboard()
+  ipcMain.handle('keyTap', (e, type) => {
+    console.log('keyTap', type)
+    keyTap(type)
+  })
 };
 
 // This method will be called when Electron has finished
