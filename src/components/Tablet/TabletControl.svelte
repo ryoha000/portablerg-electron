@@ -2,7 +2,7 @@
   import { controlsStyle, ControlType } from './useSetting'
   import Panel from './Controls/Panel.svelte'
   import { createEventDispatcher } from 'svelte';
-import { get } from 'svelte/store';
+  import Icon from '../UI/Icon.svelte'
 
   export let controlStyle: {
     id: number
@@ -36,6 +36,13 @@ import { get } from 'svelte/store';
     display: flex;
     position: absolute;
     top: 100%;
+    width: 100%;
+  }
+  .button {
+    padding: 16px;
+  }
+  .buttonRight {
+    margin-left: auto;
   }
 </style>
 
@@ -49,8 +56,12 @@ import { get } from 'svelte/store';
       {/each}
     </div>
     <div class="btnContainer">
-      <button type="button" on:click="{() => trans(-1)}">left</button>
-      <button type="button" on:click="{() => trans(1)}">right</button>
+      <div class="button" on:click="{() => trans(-1)}">
+        <Icon name="chevron-left" size="{24}" />
+      </div>
+      <div class="button buttonRight" on:click="{() => trans(1)}">
+        <Icon name="chevron-right" size="{24}" />
+      </div>
     </div>
   </div>
 {/if}
