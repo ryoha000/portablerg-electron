@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
   import { get } from 'svelte/store';
-  import useSetting, { getStyleFromRect, ControlType } from './useSetting'
+  import useSetting, { getStyleFromRect, ControlType, getControlKeyName } from './useSetting'
   import useTemplate, { controls, init } from './useTemplate'
 
   let container: HTMLElement
@@ -14,18 +14,19 @@
   }
   let button :HTMLElement
 
-  let width: number
   const RATIO = 16 / 9
-  let containerHeight = window.innerWidth / RATIO
 
+  const containerSize = {
+    width: Math.min(Math.min(window.innerWidth, 800), Math.min((window.innerHeight - 160) * RATIO)),
+    height: Math.min(Math.min(window.innerWidth / RATIO, 800 / RATIO), Math.min(window.innerHeight - 160))
+  }
   init()
 
   const { update } = useSetting()
   const dispatch = createEventDispatcher();
   onMount(() => {
     const { setupHandler, addControl, setButton } = useTemplate(container)
-    console.log(width)
-    console.log(containerHeight)
+    console.log(containerSize)
     console.log(get(controls))
     for (const type of Object.values(ControlType)) {
       console.log(elements[`${type}`])
@@ -34,26 +35,12 @@
       }
     }
     const confirm = async () => {
-      addControl()
+      addControl(containerSize.width, containerSize.height)
       await update()
       dispatch('close');
     }
     setButton(button, confirm)
   })
-  const getKeyName = (type: ControlType) => {
-    switch (type) {
-      case 0:
-        return 'Panel'
-      case 1:
-        return 'Scroll'
-      case 2:
-        return 'Enter'
-      case 3:
-        return 'Up'
-      case 4:
-        return 'Down'
-    }
-  }
 </script>
 
 <style>
@@ -74,8 +61,9 @@
   }
   .controls {
     z-index: 7;
-    width: 100%;
-    margin-top: 160px;
+    position: absolute;
+    top: 120px;
+    left: 0;
     background-color: rgba(255, 0, 0, 0.5);
   }
   .center {
@@ -98,8 +86,6 @@
   }
 </style>
 
-<svelte:window bind:innerWidth="{width}" />
-
 <div class="container" bind:this="{container}">
   {#each $controls as control}
     <div
@@ -107,9 +93,9 @@
       style="{getStyleFromRect(control.rect)}"
       bind:this="{elements[`${control.type}`]}"
     >
-      <span>{getKeyName(control.type)}</span>
+      <span>{getControlKeyName(control.type)}</span>
     </div>
   {/each}
-  <div style="height: {containerHeight}px;" class="controls center"><span>コントロール</span></div>
+  <div style="height: {containerSize.height}px; width: {containerSize.width}px" class="controls center"><span>コントロール</span></div>
   <div class="confirm" bind:this="{button}">確定</div>
 </div>

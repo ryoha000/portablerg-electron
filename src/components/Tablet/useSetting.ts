@@ -32,6 +32,21 @@ export const ControlType = {
   Down: 4,
 } as const
 
+export const getControlKeyName = (type: ControlType) => {
+  switch (type) {
+    case 0:
+      return 'Panel'
+    case 1:
+      return 'Scroll'
+    case 2:
+      return 'Enter'
+    case 3:
+      return 'Up'
+    case 4:
+      return 'Down'
+  }
+}
+
 export interface Rect {
   width: string
   height: string

@@ -9,7 +9,7 @@ export const LayoutType = {
   control: 1
 } as const
 
-interface NumRect { x: number, y: number, width: number, height: number }
+export interface NumRect { x: number, y: number, width: number, height: number }
 
 const useLayout = (container: HTMLElement) => {
   const region: Region = new ZingTouch.Region(container, true, true);

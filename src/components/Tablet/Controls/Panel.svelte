@@ -15,22 +15,27 @@
       case ControlType.Panel: {
         const { init } = useTouch(ws)
         init(container)
+        break
       }
       case ControlType.Scroll: {
         const { init } = useScroll(ws)
         init(container)
+        break
       }
       default: {
         const { init } = useKey(ws)
         switch (type) {
           case ControlType.Enter: {
             init(container, 'enter')
+            break
           }
           case ControlType.Up: {
             init(container, 'up')
+            break
           }
           case ControlType.Down: {
             init(container, 'down')
+            break
           }
           default: {
             console.error('this control type not supported')

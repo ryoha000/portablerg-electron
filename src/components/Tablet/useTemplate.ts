@@ -1,6 +1,7 @@
 import ZingTouch from '../../lib/ZingTouch/ZingTouch'
-import { ControlType, Control, setting, TabletSetting } from './useSetting'
+import { ControlType, Control, setting, TabletSetting, getControlKeyName } from './useSetting'
 import { get, writable } from 'svelte/store'
+import type { NumRect } from './useLayout'
 
 export const controls = writable<Control[]>([])
 
@@ -125,7 +126,7 @@ const useTemplate = (container: HTMLElement) => {
     const customDistance: Distance = new ZingTouch.Distance({ onStart: onDistanceStart, onMove: onDistanceMove })
     region.bind(ele, customDistance, () => {})
   }
-  const addControl = () => {
+  const addControl = (width: number, height: number) => {
     const prev: TabletSetting = get(setting)
     let maxID = -1
     for (const c of prev.controlTemplates) {
@@ -133,9 +134,26 @@ const useTemplate = (container: HTMLElement) => {
         maxID = c.id
       }
     }
+    const newControls: Control[] = []
+    const containerRect = { x: 0, y: 120, width: width, height: height }
+    console.log(containerRect)
+    for (const type of Object.values(ControlType)) {
+      const rect = rects[type]
+      const percentRect = getRect(rect, containerRect)
+      if (!percentRect) {
+        console.log(getControlKeyName(type), ' is not contain')
+        return
+      }
+      newControls.push({
+        rect: percentRect,
+        color: [0, 0, 0, 0.1],
+        type: type,
+        zIndex: 1
+      })
+    }
     prev.controlTemplates.push({
       id: maxID + 1,
-      controls: get(controls)
+      controls: newControls
     })
     setting.set(prev)
   }
@@ -168,6 +186,35 @@ const getChange = (center: { x: number, y: number }, input: ZingInput) => {
     x: Math.abs(input.current.x - center.x) - Math.abs(input.previous.x - center.x),
     y: Math.abs(input.current.y - center.y) - Math.abs(input.previous.y - center.y)
   }
+}
+
+const getRect = (rect: NumRect, containerRect: NumRect) => {
+  const x = getStartPoint(rect.x , containerRect.x, containerRect.width)
+  const y = getStartPoint(rect.y , containerRect.y, containerRect.height)
+  const width = rect.width / containerRect.width
+  const height = rect.height / containerRect.height
+  if (x + width < 0 || x > 1) {
+    return null
+  }
+  if (y + height < 0 || y > 1) {
+    return null
+  }
+  return {
+    start: {
+      x: x < 0 ? getPercent(0) : getPercent(x),
+      y: y < 0 ? getPercent(0) : getPercent(y)
+    },
+    width: x + width > 1 ? (1 - x < 0 ? getPercent(0) : getPercent(1 - x)) : getPercent(width),
+    height: y + height > 1 ? (1 - y < 0 ? getPercent(0) : getPercent(1 - y)) : getPercent(height),
+  }
+}
+
+const getPercent = (num: number) => {
+  return `${num * 100}%`
+}
+
+const getStartPoint = (inner: number, containerPoint: number, containerBase: number) => {
+  return (inner - containerPoint) / containerBase
 }
 
 export default useTemplate
