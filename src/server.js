@@ -3,21 +3,19 @@
 module.exports.setupWebSocketServer = (port) => {
   const WebSocketServer = require('ws').Server;
   const wsServer = new WebSocketServer({ port: port });
+  let offer = null
   const offers = []
   wsServer.on('connection', function(ws) {
     console.log('-- websocket connected --');
     ws.on('message', function(message) {
       const m = JSON.parse(message)
       if (m.type === 'offer') {
-        offers.push(m)
+        offer = m
         console.log('received offer websocket')
-        console.log(`id = ${m.id}`)
         return
       }
       if (m.type === 'connect') {
         console.log('received connect websocket')
-        console.log(`id = ${m.id}`)
-        const offer = offers.find(v => v.id === m.id)
         if (!offer) {
           console.log('offer is not found')
           return
