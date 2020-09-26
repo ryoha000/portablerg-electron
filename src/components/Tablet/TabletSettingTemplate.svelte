@@ -5,6 +5,7 @@
   import useTemplate, { controls, init } from './useTemplate'
   import TextButton from '../UI/TextButton.svelte'
   import { push } from 'svelte-spa-router'
+  import SettingToggleButton from '../UI/SettingToggleButton.svelte'
 
   let container: HTMLElement
   let elements: any = {
@@ -82,6 +83,7 @@
 </style>
 
 <div class="container" bind:this="{container}">
+  <SettingToggleButton iconName="close" />
   {#each $controls as control}
     <div
       class="center headerItem"

@@ -4,6 +4,7 @@
   import { controlStyles, setting } from './useSetting';
   import useSort, { overIndex } from './useSort'
   import { push } from 'svelte-spa-router'
+  import SettingToggleButton from '../UI/SettingToggleButton.svelte'
 
   let container: HTMLElement
   const set = get(setting)
@@ -47,6 +48,7 @@
 </style>
 
 <div class="container" bind:this="{container}">
+  <SettingToggleButton iconName="close" />
   <div>
     <div class="thumbnail"></div>
     {#each $controlStyles as controlStyle, i}
