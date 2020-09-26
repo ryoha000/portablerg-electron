@@ -1,21 +1,16 @@
 import type { Setting } from '../@types/Original'
 import { writable, get } from 'svelte/store';
 import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyTap } from '../renderLogic'
+import { store } from '../store';
 
-const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
-  let localStream: null | MediaStream = null;
-  let peerConnection: null | RTCPeerConnection = null;
-  let negotiationneededCounter = 0;
-  let remoteVideoStream: null | MediaStream = null
-  let ws: WebSocket | null = null
-  let mouseMoveChannel: RTCDataChannel | null = null
-  let makeAnswerCount = 0
+const useWebRTC = () => {
   const hostID = writable(0)
 
   const setupWS = (setting: Setting) => {
     const wsUrl = `ws://${setting.privateIP}:${setting.browserPort + 1}/`;
     console.log(wsUrl)
-    ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl);
+    store.ws.set(ws)
     ws.onopen = (evt) => {
       console.log('ws open()');
     };
@@ -96,6 +91,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
 
   // ICE candaidate受信時にセットする
   function addIceCandidate(candidate: RTCIceCandidate) {
+    const peerConnection = get(store.peerConnection)
     if (peerConnection) {
       peerConnection.addIceCandidate(candidate);
     }
@@ -110,6 +106,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
     console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
     console.log('sending candidate=' + message);
+    const ws = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return
@@ -131,8 +128,8 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
         }
       }
     })
-    localStream = stream
-    console.log('setted localStream: ', localStream)
+    store.localStream.set(stream)
+    console.log('setted localStream: ', stream)
     playVideo(localVideo, stream)
   }
 
@@ -158,9 +155,10 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
     // リモートのMediStreamTrackを受信した時
     peer.ontrack = async (evt) => {
       console.log('-- peer.ontrack()');
-      remoteVideoStream = evt.streams[0]
-      if (videoCallback) {
-        await videoCallback(evt.streams[0])
+      store.remoteVideoStream.set(evt.streams[0])
+      const remoteVideoElement = get(store.remoteVideoStream)
+      if (remoteVideoElement) {
+        await playVideo(remoteVideoElement, evt.streams[0])
       }
       // playVideo(remoteVideo, evt.streams[0]);
     };
@@ -180,6 +178,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
     peer.onnegotiationneeded = async () => {
       try {
         if(isOffer){
+          const negotiationneededCounter = get(store.negotiationneededCounter)
           if(negotiationneededCounter === 0){
             console.warn('createOffer')
             const offer = await peer.createOffer();
@@ -188,7 +187,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
             console.log('setLocalDescription() succsess in promise');
             const id = sendSdp(peer.localDescription);
             hostID.set(id)
-            negotiationneededCounter++;
+            store.negotiationneededCounter.update(v => v + 1)
           }
         }
       } catch(err){
@@ -202,6 +201,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
       switch (peer.iceConnectionState) {
         case 'closed':
         case 'failed':
+          const peerConnection = get(store.peerConnection)
           if (peerConnection) {
             hangUp();
           }
@@ -210,7 +210,8 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
           break;
       }
     };
-    mouseMoveChannel = peer.createDataChannel('mouseMove')
+    const mouseMoveChannel = peer.createDataChannel('mouseMove')
+    store.mouseMoveChannel.set(mouseMoveChannel)
     mouseMoveChannel.onmessage = function (event) {
       console.log("データチャネルメッセージ取得:", event.data);
     };
@@ -224,6 +225,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
       console.log("データチャネルのクローズ");
     };
 
+    const localStream: MediaStream = get(store.localStream)
     console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
     if (localStream) {
@@ -249,6 +251,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
     const m = { type: sessionDescription.type, sdp: sessionDescription.sdp, id: rId }
     const message = JSON.stringify(m);
     console.log('sending SDP=' + message);
+    const ws = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return 0
@@ -259,9 +262,10 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
   function connect() {
+    const peerConnection = get(store.peerConnection)
     if (!peerConnection) {
       console.log('make Offer');
-      peerConnection = prepareNewConnection(true);
+      store.peerConnection.set(prepareNewConnection(true))
     }
     else {
       console.warn('peer already exist.');
@@ -271,9 +275,8 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   // Answer SDPを生成する
   async function makeAnswer() {
     console.log('sending Answer. Creating remote session description...' );
-    makeAnswerCount++
-    console.warn('mekeAnswerCount: ', makeAnswerCount)
-    if (! peerConnection) {
+    const peerConnection = get(store.peerConnection)
+    if (!peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
     }
@@ -290,14 +293,17 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
 
   // Offer側のSDPをセットする処理
   async function setOffer(sessionDescription: RTCSessionDescription) {
+    const peerConnection = get(store.peerConnection)
     if (peerConnection) {
       console.error('peerConnection alreay exist!');
     }
-    peerConnection = prepareNewConnection(false);
+    const newPeerConnection = prepareNewConnection(false);
+    store.peerConnection.set(newPeerConnection)
     try{
-      await peerConnection.setRemoteDescription(sessionDescription);
+      await newPeerConnection.setRemoteDescription(sessionDescription);
       console.log('setRemoteDescription(offer) succsess in promise');
       await makeAnswer();
+      // 怪しい
     } catch(err){
       console.error('setRemoteDescription(offer) ERROR: ', err);
     }
@@ -305,7 +311,8 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   
   // Answer側のSDPをセットする場合
   async function setAnswer(sessionDescription: RTCSessionDescription) {
-    if (! peerConnection) {
+    const peerConnection = get(store.peerConnection)
+    if (!peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
     }
@@ -319,22 +326,24 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
 
   // P2P通信を切断する
   function hangUp(video?: HTMLMediaElement){
+    const peerConnection = get(store.peerConnection)
     if (peerConnection) {
       if(peerConnection.iceConnectionState !== 'closed'){
         peerConnection.close();
-        peerConnection = null;
-        negotiationneededCounter = 0;
+        store.peerConnection.set(null)
+        store.negotiationneededCounter.set(0)
         const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
         if (video) {
           video.srcObject = null
         }
+        const ws = get(store.ws)
         if (!ws) {
           console.error('ws is NULL !!!')
           return
         }
         ws.send(message);
-        remoteVideoStream = null
+        store.remoteVideoStream.set(null)
         return;
       }
     }
@@ -348,6 +357,7 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   }
 
   function playRemoteVideo(remoteVideo: HTMLMediaElement) {
+    const remoteVideoStream = get(store.remoteVideoStream)
     if (remoteVideoStream) {
       playVideo(remoteVideo, remoteVideoStream)
     } else {
@@ -356,10 +366,12 @@ const useWebRTC = (videoCallback?: (s: MediaStream) => Promise<void>) => {
   }
 
   function sendMouseMove(dPoint: { x: number, y: number }) {
+    const mouseMoveChannel = get(store.mouseMoveChannel)
     mouseMoveChannel?.send(JSON.stringify(dPoint))
   }
 
   const connectHost = () => {
+    const ws = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return
