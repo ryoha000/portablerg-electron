@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher } from 'svelte';
+  import { onMount } from 'svelte';
   import { get } from 'svelte/store';
-  import useSetting, { getStyleFromRect, ControlType, getControlKeyName } from './useSetting'
+  import useSetting, { getStyleFromRect, ControlType, getControlKeyName, setting } from './useSetting'
   import useTemplate, { controls, init } from './useTemplate'
+  import { push } from 'svelte-spa-router'
 
   let container: HTMLElement
   let elements: any = {
@@ -12,7 +13,6 @@
     '3': null,
     '4': null
   }
-  let button :HTMLElement
 
   const RATIO = 16 / 9
 
@@ -22,25 +22,26 @@
   }
   init()
 
-  const { update } = useSetting()
-  const dispatch = createEventDispatcher();
-  onMount(() => {
-    const { setupHandler, addControl, setButton } = useTemplate(container)
-    console.log(containerSize)
-    console.log(get(controls))
+  const { init: initSetting, update } = useSetting()
+  let addCon: (width: number, height: number) => void
+  onMount(async () => {
+    const prev = get(setting)
+    if (!prev) {
+      await initSetting()
+    }
+    const { setupHandler, addControl } = useTemplate(container)
+    addCon = addControl
     for (const type of Object.values(ControlType)) {
-      console.log(elements[`${type}`])
       if (elements[`${type}`] !== null) {
         setupHandler(elements[`${type}`], type)
       }
     }
-    const confirm = async () => {
-      addControl(containerSize.width, containerSize.height)
-      await update()
-      dispatch('close');
-    }
-    setButton(button, confirm)
   })
+  const confirm = async () => {
+    addCon(containerSize.width, containerSize.height)
+    await update()
+    push('/client')
+  }
 </script>
 
 <style>
@@ -97,5 +98,5 @@
     </div>
   {/each}
   <div style="height: {containerSize.height}px; width: {containerSize.width}px" class="controls center"><span>コントロール</span></div>
-  <div class="confirm" bind:this="{button}">確定</div>
+  <div class="confirm" on:click="{confirm}">確定</div>
 </div>

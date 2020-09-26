@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import { controlStyles, setting } from './useSetting';
   import useSort, { overIndex } from './useSort'
+  import { push } from 'svelte-spa-router'
 
   let container: HTMLElement
   const set = get(setting)
@@ -15,6 +16,9 @@
       setupElements((ele as HTMLElement), i)
     }
   })
+  const close = () => {
+    push('/client')
+  }
 </script>
 
 <style>

@@ -1,5 +1,5 @@
 import ZingTouch from '../../lib/ZingTouch/ZingTouch'
-import { TabletSetting, Rect, setting } from './useSetting'
+import useSetting, { TabletSetting, Rect, setting } from './useSetting'
 import { get } from 'svelte/store'
 
 export type LayoutType = typeof LayoutType[keyof typeof LayoutType]
@@ -12,14 +12,22 @@ export const LayoutType = {
 export interface NumRect { x: number, y: number, width: number, height: number }
 
 const useLayout = (container: HTMLElement) => {
-  const region: Region = new ZingTouch.Region(container, true, true);
+  const region: Region = new ZingTouch.Region(container, false, true);
   const rects: NumRect[] = []
   const distanceCenters: { x: number, y: number }[] = []
   const elements: (null | HTMLElement)[] = Array(Object.values(LayoutType).length).map(_ => null)
   let isDragging = Array(Object.values(LayoutType).length).map(_ => false)
 
-  const init = () => {
-    const s: TabletSetting = get(setting)
+  const init = async () => {
+    let s: TabletSetting | null = get(setting)
+    if (!s) {
+      const { init: initSetting } = useSetting()
+      await initSetting()
+    }
+    s = get(setting)
+    if (!s) {
+      return
+    }
     for (const type of Object.values(LayoutType)) {
       if (type === LayoutType.window) {
         rects[type] = getNumRect(s.window.rect)
@@ -139,7 +147,7 @@ const useLayout = (container: HTMLElement) => {
 };
 
 export const setTouch = (ele: HTMLElement, callback: () => Promise<void>) => {
-  const region: Region = new ZingTouch.Region(ele, true, true)
+  const region: Region = new ZingTouch.Region(ele, false, true)
   region.bind(ele, 'tap', callback)
 }
 
