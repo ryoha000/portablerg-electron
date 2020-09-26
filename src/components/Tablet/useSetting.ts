@@ -130,12 +130,15 @@ const useSetting = () => {
     console.log('setting: ', s)
   }
   const update = async () => {
+    if (get(setting) === null) {
+      alert('setting is null')
+      return
+    }
     const res = await fetch(path, {
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
       body: JSON.stringify(get(setting))
     })
-    console.log(res)
   }
   return {
     init,

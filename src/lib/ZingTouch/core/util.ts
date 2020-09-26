@@ -153,7 +153,7 @@ let util = {
    * @param {Element} target
    * @return {Boolean}
    */
-  isInside(x: any, y: any, target: any) {
+  isInside(x: number, y: number, target: HTMLElement) {
     const rect = target.getBoundingClientRect();
     return ((x > rect.left && x < rect.left + rect.width) &&
     (y > rect.top && y < rect.top + rect.height));

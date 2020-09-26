@@ -9,7 +9,7 @@ const PADDING = 16
 const HEIGHT = 64
 
 const useLayout = (container: HTMLElement) => {
-  const region: Region = new ZingTouch.Region(container, true, true);
+  const region: Region = new ZingTouch.Region(container, false, true);
   const tops: number[] = []
   const elements: (null | HTMLElement)[] = []
   let dragBuffer = 0
@@ -95,7 +95,7 @@ const useLayout = (container: HTMLElement) => {
 };
 
 export const setTouch = (ele: HTMLElement, callback: () => Promise<void>) => {
-  const region: Region = new ZingTouch.Region(ele, true, true)
+  const region: Region = new ZingTouch.Region(ele, false, true)
   region.bind(ele, 'tap', callback)
 }
 

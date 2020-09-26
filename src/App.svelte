@@ -12,7 +12,6 @@
 		'/': Desktop,
 		'/select': Select,
 		'/client': Tablet,
-		// '/client/setting': TabletSettingSort,
 		'/client/setting/layout': TabletSettingLayout,
 		'/client/setting/template': TabletSettingTemplate,
 		'/client/setting/sort': TabletSettingSort,

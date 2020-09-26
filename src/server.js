@@ -107,7 +107,6 @@ module.exports.setupClientServer = (port) => {
             body += chunk
           })
           req.on('end', () => {
-            console.log('request body: ', body)
             fs.writeFile(clientSettingUrl, body, (err) => {
               if (!err) {
                 res.writeHead(200);

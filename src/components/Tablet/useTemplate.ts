@@ -46,7 +46,6 @@ const useTemplate = (container: HTMLElement) => {
     })
   }
 
-
   const setupHandler = (ele: HTMLElement, type: ControlType) => {
     if (rects.length < 4) {
       console.error('not initialize')
@@ -136,7 +135,6 @@ const useTemplate = (container: HTMLElement) => {
     }
     const newControls: Control[] = []
     const containerRect = { x: 0, y: 120, width: width, height: height }
-    console.log(containerRect)
     for (const type of Object.values(ControlType)) {
       const rect = rects[type]
       const percentRect = getRect(rect, containerRect)
@@ -151,34 +149,16 @@ const useTemplate = (container: HTMLElement) => {
         zIndex: 1
       })
     }
+    if (newControls.length === 0) {
+      return
+    }
     prev.controlTemplates.push({
       id: maxID + 1,
       controls: newControls
     })
     setting.set(prev)
   }
-  const setButton = (ele: HTMLElement, callback: () => Promise<void>) => {
-    const rect = ele.getBoundingClientRect()
-
-    const onTapEnd = (inputs: ZingInput[], timing: TapData) => {
-      if (inputs.length === 0) {
-        console.error('no tap information')
-        return
-      }
-      const input = inputs[0]
-      if (rect.x < input.current.x && input.current.x < rect.x + rect.width && rect.y < input.current.y && input.current.y < rect.y + rect.height) {
-        callback()
-      }
-    }
-
-    const customTap: Tap = new ZingTouch.Tap({ onEnd: onTapEnd })
-
-    region.bind(container, customTap, () => {})
-  }
-  const dispose = () => {
-    region.unbind(container)
-  }
-  return { setupHandler, addControl, setButton, dispose }
+  return { setupHandler, addControl }
 };
 
 const getChange = (center: { x: number, y: number }, input: ZingInput) => {
