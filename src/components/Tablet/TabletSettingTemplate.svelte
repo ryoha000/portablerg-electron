@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import useSetting, { getStyleFromRect, ControlType, getControlKeyName, setting } from './useSetting'
   import useTemplate, { controls, init } from './useTemplate'
+  import TextButton from '../UI/TextButton.svelte'
   import { push } from 'svelte-spa-router'
 
   let container: HTMLElement
@@ -77,13 +78,6 @@
     margin-top: auto;
     margin-bottom: 8rem;
     z-index: 999999;
-    width: 8rem;
-    height: 2rem;
-    line-height: 2rem;
-    border-radius: 1rem;
-    border: black solid 1px;
-    text-align: center;
-    font-size: 1.8rem;
   }
 </style>
 
@@ -98,5 +92,5 @@
     </div>
   {/each}
   <div style="height: {containerSize.height}px; width: {containerSize.width}px" class="controls center"><span>コントロール</span></div>
-  <div class="confirm" on:click="{confirm}">確定</div>
+  <div class="confirm"><TextButton on:click="{confirm}" label="確定" /></div>
 </div>

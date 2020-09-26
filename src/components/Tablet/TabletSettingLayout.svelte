@@ -3,6 +3,7 @@
   import useSetting, { windowStyle, controlsStyle } from './useSetting'
   import useLayout, { LayoutType } from './useLayout'
   import { push } from 'svelte-spa-router'
+  import TextButton from '../UI/TextButton.svelte'
 
   let container: HTMLElement
   let windowElement: HTMLElement
@@ -50,18 +51,11 @@
     margin-top: auto;
     margin-bottom: 8rem;
     z-index: 999999;
-    width: 8rem;
-    height: 2rem;
-    line-height: 2rem;
-    border-radius: 1rem;
-    border: black solid 1px;
-    text-align: center;
-    font-size: 1.8rem;
   }
 </style>
 
 <div class="container" bind:this="{container}">
   <div style="{$windowStyle}" class="window center" bind:this="{windowElement}"><span>Window</span></div>
   <div style="{$controlsStyle}" class="controls center" bind:this="{controlsElement}"><span>コントロール</span></div>
-  <div class="confirm" on:click="{confirm}">確定</div>
+  <div class="confirm"><TextButton label="確定" on:click="{confirm}" /></div>
 </div>
