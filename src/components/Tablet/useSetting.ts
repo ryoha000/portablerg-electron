@@ -88,6 +88,9 @@ export const controlStyles = derived(setting, ($setting) => {
   }
   const res: ControlStyle[] = []
   for (const template of $setting.controlTemplates) {
+    if (!template) {
+      continue
+    }
     const controlStyle: ControlStyle = { id: template.id, controls: [] }
     for (const control of template.controls) {
       controlStyle.controls.push({

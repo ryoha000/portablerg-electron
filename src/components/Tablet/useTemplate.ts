@@ -142,7 +142,7 @@ const useTemplate = (container: HTMLElement) => {
       const percentRect = getRect(rect, containerRect)
       if (!percentRect) {
         console.log(getControlKeyName(type), ' is not contain')
-        return
+        continue
       }
       newControls.push({
         rect: percentRect,

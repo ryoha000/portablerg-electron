@@ -5,6 +5,7 @@
   import TabletControl from './TabletControl.svelte'
   import TabletSettingLayout from './TabletSettingLayout.svelte'
   import TabletSettingTemplate from './TabletSettingTemplate.svelte'
+  import TabletSettingSort from './TabletSettingSort.svelte'
   import { get } from 'svelte/store';
   import Icon from '../UI/Icon.svelte'
 
@@ -13,6 +14,7 @@
   let isOpenToggleSetting = false
   let isOpenLayoutSetting = false
   let isOpenTemplateSetting = false
+  let isOpenSortSetting = false
   let id = 0
 
   const {
@@ -31,11 +33,12 @@
     } else {
       ws = setupWS({ privateIP: location.hostname, browserPort: 2401 })
     }
+    // document.documentElement.requestFullscreen()
   })
   const stop = (e: MouseEvent) => {
     e.stopPropagation()
   }
-  const openSetting = (type: 'layout' | 'template', e: MouseEvent) => {
+  const openSetting = (type: 'layout' | 'template' | 'sort', e: MouseEvent) => {
     console.log('open')
     isOpenToggleSetting = false
     isOpenTemplateSetting = false
@@ -45,6 +48,9 @@
     }
     if (type === 'template') {
       isOpenTemplateSetting = true
+    }
+    if (type === 'sort') {
+      isOpenSortSetting = true
     }
     stop(e)
   }
@@ -65,6 +71,8 @@
         style: string
       }[]
     }[] = get(controlStyles)
+    console.log(e)
+    console.log(tmp)
     const nowIndex = tmp.findIndex(v => v.id === id)
     if (nowIndex === -1) {
       if (tmp.length === 0) {
@@ -89,6 +97,7 @@
       }
     }
     id = tmp[nowIndex + e.detail.num].id
+    console.log(tmp[nowIndex + e.detail.num])
   }
 </script>
 
@@ -127,7 +136,6 @@
     position: absolute;
     top: 2rem;
     right: 2rem;
-    /* padding: 1rem; */
     z-index: 999999;
     border: rgba(0, 0, 0, 0.7) solid 1px;
   }
@@ -156,6 +164,11 @@
       <TabletSettingTemplate on:close="{closeSetting}" />
     </div>
   {/if}
+  {#if isOpenSortSetting}
+    <div class="setting" on:click="{stop}">
+      <TabletSettingSort on:close="{closeSetting}" />
+    </div>
+  {/if}
   {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting && !isOpenToggleSetting}
     {#each $controlStyles as controlStyle}
       {#if controlStyle.id === id}
@@ -172,7 +185,7 @@
     <div class="settingContainer">
       <div class="settingItem" on:click="{(e) => openSetting('layout', e)}">レイアウトの設定を開く</div>
       <div class="settingItem" on:click="{(e) => openSetting('template', e)}">コントロールのテンプレートを作る</div>
-      <div class="settingItem">コントロールのテンプレートを並び替える</div>
+      <div class="settingItem" on:click="{(e) => openSetting('sort', e)}">コントロールのテンプレートを並び替える</div>
     </div>
   {/if}
 </div>

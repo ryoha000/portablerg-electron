@@ -19,8 +19,7 @@
 	const {
 		setupWS,
 		setStreamByID,
-		connect,
-		hangUp
+		connect
 	} = useWebRTC()
 
 	onMount(async () => {
@@ -102,6 +101,4 @@
 			<EditPort port="{setting.browserPort}" on:confirm="{confirmBrowserPort}" on:reset="{reset}" />
 		{/if}
 	</ColumnTemplate>
-  <button type="button" on:click="{connect}">Connect</button>
-	<button type="button" on:click="{() => hangUp()}">Hang Up</button>
 </div>
