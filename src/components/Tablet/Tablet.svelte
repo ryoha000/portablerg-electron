@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import useWebRTC from '../../lib/webRTC'
-  import useSetting, { controlStyles, ControlType, windowStyle } from './useSetting'
+  import useSetting, { controlStyles, windowStyle } from './useSetting'
   import TabletControl from './TabletControl.svelte'
-  import { get } from 'svelte/store';
   import Icon from '../UI/Icon.svelte'
   import { store } from '../../store';
   // @ts-ignore
   import { link } from 'svelte-spa-router'
+  import { trans } from './useControl'
 
   let remoteVideo: HTMLMediaElement
   let ws: WebSocket
@@ -33,11 +33,6 @@
   const stop = (e: MouseEvent) => {
     e.stopPropagation()
   }
-  const openSetting = (e: MouseEvent) => {
-    console.log('open')
-    isOpenToggleSetting = false
-    stop(e)
-  }
   const openToggleSetting = (e: MouseEvent) => {
     isOpenToggleSetting = true
     stop(e)
@@ -46,40 +41,7 @@
     isOpenToggleSetting = false
   }
   const setID = async (e: CustomEvent<{ num: 1 | -1}>) => {
-    const tmp: {
-      id: number
-      controls: {
-        type: ControlType
-        style: string
-      }[]
-    }[] = get(controlStyles)
-    console.log(e)
-    console.log(tmp)
-    const nowIndex = tmp.findIndex(v => v.id === id)
-    if (nowIndex === -1) {
-      if (tmp.length === 0) {
-        alert('コントロールが登録されていません')
-        return
-      }
-      id = tmp[0].id
-      return
-    }
-    // 右端の時
-    if (nowIndex + 1 === tmp.length) {
-      if (e.detail.num === 1) {
-        id = tmp[0].id
-        return
-      }
-    }
-    // 左端の時
-    if (nowIndex === 0) {
-      if (e.detail.num === -1) {
-        id = tmp[tmp.length - 1].id
-        return
-      }
-    }
-    id = tmp[nowIndex + e.detail.num].id
-    console.log(tmp[nowIndex + e.detail.num])
+    trans(id, e.detail.num)
   }
 </script>
 
@@ -123,7 +85,6 @@
     border-bottom: 0;
   }
 </style>
-
 
 <div class="container" on:click="{closeSetting}">
   <div class="btnContainer">
