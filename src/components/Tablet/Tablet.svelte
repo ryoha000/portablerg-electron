@@ -3,31 +3,26 @@
   import useWebRTC from '../../lib/webRTC'
   import useSetting, { controlStyles, ControlType, windowStyle } from './useSetting'
   import TabletControl from './TabletControl.svelte'
-  import TabletSettingLayout from './TabletSettingLayout.svelte'
-  import TabletSettingTemplate from './TabletSettingTemplate.svelte'
-  import TabletSettingSort from './TabletSettingSort.svelte'
   import { get } from 'svelte/store';
   import Icon from '../UI/Icon.svelte'
+  import { store } from '../../store';
+  // @ts-ignore
+  import { link } from 'svelte-spa-router'
 
-  let remoteVideo: HTMLVideoElement
+  let remoteVideo: HTMLMediaElement
   let ws: WebSocket
   let isOpenToggleSetting = false
-  let isOpenLayoutSetting = false
-  let isOpenTemplateSetting = false
-  let isOpenSortSetting = false
   let id = 0
 
   const {
     hangUp,
     setupWS,
-    playVideo,
     connectHost,
-  } = useWebRTC(async (s) => {
-    await playVideo(remoteVideo, s)
-  })
+  } = useWebRTC()
   const { init } = useSetting()
-  onMount(() => {
-    init()
+  onMount(async () => {
+    store.remoteVideoElement.set(remoteVideo)
+    await init()
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       ws = setupWS({ privateIP: location.hostname, browserPort: Number(location.port) })
     } else {
@@ -38,20 +33,9 @@
   const stop = (e: MouseEvent) => {
     e.stopPropagation()
   }
-  const openSetting = (type: 'layout' | 'template' | 'sort', e: MouseEvent) => {
+  const openSetting = (e: MouseEvent) => {
     console.log('open')
     isOpenToggleSetting = false
-    isOpenTemplateSetting = false
-    isOpenLayoutSetting = false
-    if (type === 'layout') {
-      isOpenLayoutSetting = true
-    }
-    if (type === 'template') {
-      isOpenTemplateSetting = true
-    }
-    if (type === 'sort') {
-      isOpenSortSetting = true
-    }
     stop(e)
   }
   const openToggleSetting = (e: MouseEvent) => {
@@ -60,8 +44,6 @@
   }
   const closeSetting = () => {
     isOpenToggleSetting = false
-    isOpenTemplateSetting = false
-    isOpenLayoutSetting = false
   }
   const setID = async (e: CustomEvent<{ num: 1 | -1}>) => {
     const tmp: {
@@ -111,14 +93,6 @@
   .window {
     z-index: -1;
   }
-  .setting {
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    position: absolute;
-    z-index: 5;
-  }
   .btnContainer {
     display: flex;
     position: absolute;
@@ -138,6 +112,8 @@
     right: 2rem;
     z-index: 999999;
     border: rgba(0, 0, 0, 0.7) solid 1px;
+    display: flex;
+    flex-direction: column;
   }
   .settingItem {
     border-bottom: rgba(0, 0, 0, 0.7) solid 1px;
@@ -154,22 +130,7 @@
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
   </div>
-  {#if isOpenLayoutSetting}
-    <div class="setting" on:click="{stop}">
-      <TabletSettingLayout on:close="{closeSetting}" />
-    </div>
-  {/if}
-  {#if isOpenTemplateSetting}
-    <div class="setting" on:click="{stop}">
-      <TabletSettingTemplate on:close="{closeSetting}" />
-    </div>
-  {/if}
-  {#if isOpenSortSetting}
-    <div class="setting" on:click="{stop}">
-      <TabletSettingSort on:close="{closeSetting}" />
-    </div>
-  {/if}
-  {#if ws && !isOpenLayoutSetting && !isOpenTemplateSetting && !isOpenToggleSetting}
+  {#if ws && !isOpenToggleSetting}
     {#each $controlStyles as controlStyle}
       {#if controlStyle.id === id}
         <TabletControl {ws} {controlStyle} on:trans="{setID}" />
@@ -183,9 +144,9 @@
   </div>
   {#if isOpenToggleSetting}
     <div class="settingContainer">
-      <div class="settingItem" on:click="{(e) => openSetting('layout', e)}">レイアウトの設定を開く</div>
-      <div class="settingItem" on:click="{(e) => openSetting('template', e)}">コントロールのテンプレートを作る</div>
-      <div class="settingItem" on:click="{(e) => openSetting('sort', e)}">コントロールのテンプレートを並び替える</div>
+      <a href="/client/setting/layout" class="settingItem" use:link>レイアウトの設定を開く</a>
+      <a href="/client/setting/template" class="settingItem" use:link>コントロールのテンプレートを作る</a>
+      <a href="/client/setting/sort" class="settingItem" use:link>コントロールのテンプレートを並び替える</a>
     </div>
   {/if}
 </div>
