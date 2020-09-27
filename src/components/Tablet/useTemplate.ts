@@ -184,9 +184,21 @@ const getRect = (rect: NumRect, containerRect: NumRect) => {
       x: x < 0 ? getPercent(0) : getPercent(x),
       y: y < 0 ? getPercent(0) : getPercent(y)
     },
-    width: x + width > 1 ? (1 - x < 0 ? getPercent(0) : getPercent(1 - x)) : getPercent(width),
-    height: y + height > 1 ? (1 - y < 0 ? getPercent(0) : getPercent(1 - y)) : getPercent(height),
+    width: getPercentSize(x, width),
+    height: getPercentSize(y, height),
   }
+}
+
+const getPercentSize = (point: number, size: number) => {
+  // 正の方向ににはみ出してるとき
+  if (point + size > 1) {
+    return getPercent(1 - point)
+  }
+  // 負の方向にはみ出してるとき
+  if (point < 0) {
+    return getPercent(size + point)
+  }
+  return getPercent(size)
 }
 
 const getPercent = (num: number) => {
