@@ -22,10 +22,8 @@
 
 {#if candidates.length !== 0}
   <div class="container">
-    <div>head</div>
     {#each candidates as candidate}
       <SelectWindowDialogItem on:select="{select}" {candidate} />
-      <div>divisions</div>
     {/each}
   </div>
 {/if}
