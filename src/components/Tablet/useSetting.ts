@@ -68,6 +68,18 @@ export interface ControlStyle {
 
 export const setting = writable<TabletSetting | null>(null)
 
+export const getSetting = async (): Promise<TabletSetting> => {
+  const nowS = get(setting)
+  if (nowS) {
+    return nowS
+  }
+  const { init } = useSetting()
+  await init()
+  const newS = get(setting)
+  console.log(newS)
+  return newS
+}
+
 export const windowStyle = derived(setting, ($setting) => {
   if (!$setting) {
     return ''
@@ -140,9 +152,18 @@ const useSetting = () => {
       body: JSON.stringify(get(setting))
     })
   }
+  const deleteTemplateByID = async (id: number) => {
+    const prev = await getSetting()
+    const deleteIndex = prev.controlTemplates.findIndex(v => v.id === id)
+    if (deleteIndex < 0) return
+    prev.controlTemplates.splice(deleteIndex, 1)
+    setting.set(prev)
+    await update()
+  }
   return {
     init,
-    update
+    update,
+    deleteTemplateByID
   }
 }
 

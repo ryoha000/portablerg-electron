@@ -1,6 +1,5 @@
 <script>
   import { link } from 'svelte-spa-router'
-  import Icon from '../UI/Icon.svelte'
   import SettingToggleButton from '../UI/SettingToggleButton.svelte'
 
   let isOpenToggleSetting = false
