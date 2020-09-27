@@ -5,12 +5,11 @@
   import TabletControl from './TabletControl.svelte'
   import { store } from '../../store';
   import TabletSetting from './TabletSetting.svelte'
-  import { getNextID } from './useControl'
+  import { getNextIndex } from './useControl'
 
   let remoteVideo: HTMLMediaElement
   let ws: WebSocket
-  let isOpenToggleSetting = false
-  let id = 0
+  let index = 0
 
   const {
     hangUp,
@@ -28,14 +27,9 @@
     }
     // document.documentElement.requestFullscreen()
   })
-  const closeSetting = () => {
-    isOpenToggleSetting = false
-  }
-  const setID = async (e: CustomEvent<{ num: 1 | -1}>) => {
-    const next = getNextID(id, e.detail.num)
-    if (next) {
-      id = next
-    }
+  const trans = async (e: CustomEvent<{ num: 1 | -1}>) => {
+    const next = getNextIndex(index, e.detail.num)
+    index = next
   }
 </script>
 
@@ -56,16 +50,16 @@
   }
 </style>
 
-<div class="container" on:click="{closeSetting}">
+<div class="container">
   <div class="btnContainer">
     <button type="button" on:click="{connectHost}">Connect</button>
     <button type="button" on:click="{() => hangUp(remoteVideo)}">Hang Up</button>
   </div>
   {#if ws}
   <!-- {#if ws && !isOpenToggleSetting} -->
-    {#each $controlStyles as controlStyle}
-      {#if controlStyle.id === id}
-        <TabletControl {ws} {controlStyle} on:trans="{setID}" />
+    {#each $controlStyles as controlStyle, i}
+      {#if i === index}
+        <TabletControl {ws} {controlStyle} on:trans="{trans}" />
       {/if}
     {/each}
     <!-- svelte-ignore a11y-media-has-caption -->
