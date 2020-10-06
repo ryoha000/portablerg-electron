@@ -2,7 +2,6 @@
 	import { onDestroy, onMount } from "svelte";
 	import ColumnTemplate from './ColumnTemplate.svelte'
 	import useWebRTC from '../../lib/webRTC'
-	import Icon from '../UI/Icon.svelte'
 	import TextButton from '../UI/TextButton.svelte'
 	import { openDialog, listenID, getSetting, updateSetting, resetSetting, copy, mouseDispose } from '../../renderLogic'
 	import EditIp from "./EditIP.svelte";
@@ -66,14 +65,11 @@
 	.flexContainer {
 		display: flex;
 	}
-	.clickable {
-		cursor: pointer;
-	}
 </style>
 
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
-	<ColumnTemplate label="端末側URL">
+	<!-- <ColumnTemplate label="端末側URL">
 		{#if setting}
 			<div class="flexContainer">
 				<div class="clickable" on:click="{() => copy(`http://${setting?.privateIP}:${setting?.browserPort}/#/client`)}">
@@ -82,7 +78,7 @@
 				<div>{`http://${setting?.privateIP}:${setting?.browserPort}/#/client`}</div>
 			</div>
 		{/if}
-	</ColumnTemplate>
+	</ColumnTemplate> -->
 	<ColumnTemplate label="Windowの選択">
     <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 		<div>現在: {name ?? '未選択'}</div>
