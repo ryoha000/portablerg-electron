@@ -12,7 +12,7 @@
 	import useWindow from "./useWindow";
 
 	let localVideo: HTMLVideoElement
-	let id: string
+	// let id: string
 	let name: string
 	let setting: Setting | null = null
 
@@ -25,7 +25,7 @@
 	onMount(async () => {
 		try {
 			listenID(async (i: string, n: string) => {
-				id = i
+				// id = i
 				name = n
 				await setStreamByID(i, localVideo)
 				connect()

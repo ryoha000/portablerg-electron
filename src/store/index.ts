@@ -1,5 +1,4 @@
 import { writable } from 'svelte/store'
-import type { TabletSetting } from '../components/Tablet/useSetting'
 
 export const store = {
   localStream: writable<null | MediaStream>(null),
@@ -9,6 +8,4 @@ export const store = {
   remoteVideoStream: writable<null | MediaStream>(null),
   ws: writable<WebSocket | null>(null),
   mouseMoveChannel: writable<RTCDataChannel | null>(null),
-
-  setting: writable<TabletSetting | null>(null)
 }
