@@ -13,8 +13,8 @@ jobs:
         with:
           node-version: 12.x
       - uses: actions/checkout@v2
-      - run: Sudo apt-get install python2.6
-      - run: Sudo apt-get install build-essential
+      - run: sudo apt-get install python2.6
+      - run: sudo apt-get install build-essential
       - run: npm ci
   build:
     name: Build
