@@ -90,7 +90,7 @@ const useWebRTC = () => {
 
   // ICE candaidate受信時にセットする
   function addIceCandidate(candidate: RTCIceCandidate) {
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (peerConnection) {
       peerConnection.addIceCandidate(candidate);
     }
@@ -105,7 +105,7 @@ const useWebRTC = () => {
     console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
     console.log('sending candidate=' + message);
-    const ws = get(store.ws)
+    const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return
@@ -151,17 +151,6 @@ const useWebRTC = () => {
     const pc_config = {"iceServers":[ {"urls":"stun:stun.webrtc.ecl.ntt.com:3478"} ]};
     const peer = new RTCPeerConnection(pc_config);
 
-    // リモートのMediStreamTrackを受信した時
-    peer.ontrack = async (evt) => {
-      console.log('-- peer.ontrack()');
-      store.remoteVideoStream.set(evt.streams[0])
-      const remoteVideoElement = get(store.remoteVideoStream)
-      if (remoteVideoElement) {
-        await playVideo(remoteVideoElement, evt.streams[0])
-      }
-      // playVideo(remoteVideo, evt.streams[0]);
-    };
-
     // ICE Candidateを収集したときのイベント
     peer.onicecandidate = evt => {
       if (evt.candidate) {
@@ -200,7 +189,7 @@ const useWebRTC = () => {
       switch (peer.iceConnectionState) {
         case 'closed':
         case 'failed':
-          const peerConnection = get(store.peerConnection)
+          const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
           if (peerConnection) {
             hangUp();
           }
@@ -224,7 +213,7 @@ const useWebRTC = () => {
       console.log("データチャネルのクローズ");
     };
 
-    const localStream: MediaStream = get(store.localStream)
+    const localStream: MediaStream | null = get(store.localStream)
     console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
     if (localStream) {
@@ -250,7 +239,7 @@ const useWebRTC = () => {
     const m = { type: sessionDescription.type, sdp: sessionDescription.sdp, id: rId }
     const message = JSON.stringify(m);
     console.log('sending SDP=' + message);
-    const ws = get(store.ws)
+    const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return 0
@@ -261,7 +250,7 @@ const useWebRTC = () => {
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
   function connect() {
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (!peerConnection) {
       console.log('make Offer');
       store.peerConnection.set(prepareNewConnection(true))
@@ -274,7 +263,7 @@ const useWebRTC = () => {
   // Answer SDPを生成する
   async function makeAnswer() {
     console.log('sending Answer. Creating remote session description...' );
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (!peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
@@ -292,7 +281,7 @@ const useWebRTC = () => {
 
   // Offer側のSDPをセットする処理
   async function setOffer(sessionDescription: RTCSessionDescription) {
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (peerConnection) {
       console.error('peerConnection alreay exist!');
     }
@@ -310,7 +299,7 @@ const useWebRTC = () => {
   
   // Answer側のSDPをセットする場合
   async function setAnswer(sessionDescription: RTCSessionDescription) {
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (!peerConnection) {
       console.error('peerConnection NOT exist!');
       return;
@@ -325,7 +314,7 @@ const useWebRTC = () => {
 
   // P2P通信を切断する
   function hangUp(video?: HTMLMediaElement){
-    const peerConnection = get(store.peerConnection)
+    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (peerConnection) {
       if(peerConnection.iceConnectionState !== 'closed'){
         peerConnection.close();
@@ -336,7 +325,7 @@ const useWebRTC = () => {
         if (video) {
           video.srcObject = null
         }
-        const ws = get(store.ws)
+        const ws: WebSocket | null = get(store.ws)
         if (!ws) {
           console.error('ws is NULL !!!')
           return
@@ -356,7 +345,7 @@ const useWebRTC = () => {
   }
 
   function playRemoteVideo(remoteVideo: HTMLMediaElement) {
-    const remoteVideoStream = get(store.remoteVideoStream)
+    const remoteVideoStream: MediaStream | null = get(store.remoteVideoStream)
     if (remoteVideoStream) {
       playVideo(remoteVideo, remoteVideoStream)
     } else {
@@ -365,12 +354,12 @@ const useWebRTC = () => {
   }
 
   function sendMouseMove(dPoint: { x: number, y: number }) {
-    const mouseMoveChannel = get(store.mouseMoveChannel)
+    const mouseMoveChannel: RTCDataChannel | null = get(store.mouseMoveChannel)
     mouseMoveChannel?.send(JSON.stringify(dPoint))
   }
 
   const connectHost = () => {
-    const ws = get(store.ws)
+    const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return
