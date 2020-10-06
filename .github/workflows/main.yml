@@ -13,7 +13,6 @@ jobs:
         with:
           node-version: 12.x
       - uses: actions/checkout@v2
-      - run: python --version
       - run: sudo apt-get update
       - run: sudo apt-get install libxtst-dev libpng++-dev
       - run: sudo apt-get install build-essential
@@ -29,6 +28,9 @@ jobs:
         with:
           node-version: 12.x
       - uses: actions/checkout@v2
+      - run: sudo apt-get update
+      - run: sudo apt-get install libxtst-dev libpng++-dev
+      - run: sudo apt-get install build-essential
       - run: npm ci
       - run: npm run package
   svelte-build:
@@ -42,6 +44,9 @@ jobs:
         with:
           node-version: 12.x
       - uses: actions/checkout@v2
+      - run: sudo apt-get update
+      - run: sudo apt-get install libxtst-dev libpng++-dev
+      - run: sudo apt-get install build-essential
       - run: npm ci
       - run: npm run svelte-build
   typeCheck:
@@ -55,5 +60,8 @@ jobs:
         with:
           node-version: 12.x
       - uses: actions/checkout@v2
+      - run: sudo apt-get update
+      - run: sudo apt-get install libxtst-dev libpng++-dev
+      - run: sudo apt-get install build-essential
       - run: npm ci
       - run: npm run validate
