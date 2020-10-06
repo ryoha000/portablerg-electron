@@ -1,7 +1,5 @@
 const { app, BrowserWindow, ipcMain, desktopCapturer, remote } = require('electron');
 const path = require('path');
-const { setupWebSocketServer, setupClientServer } = require('./server')
-const { getPrivateIP, removePrevFireWall, addNewFireWall, getSetting, updateSetting, resetSetting } = require('./ipcHandlers')
 const { useMouse } = require('./useMouse')
 const { useKeyboard } = require('./useKeyboard')
 
@@ -18,9 +16,6 @@ if (require('electron-squirrel-startup')) {
 }
 
 const createWindow = async () => {
-  const setting = await getSetting()
-  setupClientServer(setting.browserPort)
-  setupWebSocketServer(setting.browserPort + 1)
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
@@ -47,7 +42,7 @@ const createWindow = async () => {
   let dialog
   ipcMain.handle('openDialog', (e, sources) => {
     dialog = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
-    dialog.loadURL(`http://${setting.privateIP}:${setting.browserPort}/#/select`)
+    dialog.loadFile(path.join(__dirname, '../public/index.html'));
     dialog.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
     dialog.webContents.session.setPermissionCheckHandler(async (webContents, permission, details) => {
       return true
@@ -66,30 +61,6 @@ const createWindow = async () => {
   ipcMain.handle('decideWindow', (e, id, name) => {
     mainWindow.webContents.send('id', id, name)
     dialog.hide()
-    return
-  })
-  ipcMain.handle('getPrivateIP', (e) => {
-    const ip = getPrivateIP()
-    return ip
-  })
-  ipcMain.handle('removePrevFireWall', (e, addr, port) => {
-    removePrevFireWall(addr, port)
-    return
-  })
-  ipcMain.handle('addNewFireWall', (e, addr, port) => {
-    addNewFireWall(addr, port)
-    return
-  })
-  ipcMain.handle('getSetting', async (e, addr, port) => {
-    const setting = await getSetting(addr, port)
-    return setting
-  })
-  ipcMain.handle('updateSetting', async (e, newSetting) => {
-    await updateSetting(newSetting)
-    return
-  })
-  ipcMain.handle('resetSetting', async (e) => {
-    await resetSetting()
     return
   })
   const {

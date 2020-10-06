@@ -71,26 +71,6 @@ module.exports.addNewFireWall = (addr, port) => {
   });
 }
 
-module.exports.getSetting = async () => {
-  const fs = require('fs');
-  const path = require('path')
-
-  const settingPath = path.join(__dirname, '../public/setting.json')
-  try {
-    const setting = await fs.promises.readFile(settingPath)
-    return JSON.parse(setting)
-  } catch (e) {
-    const defaultSetting = {
-      privateIP: this.getPrivateIP(),
-      browserPort: 2401,
-    }
-    await fs.promises.writeFile(settingPath, JSON.stringify(defaultSetting));
-    this.addNewFireWall(defaultSetting.privateIP, defaultSetting.browserPort)
-    this.addNewFireWall(defaultSetting.privateIP, defaultSetting.browserPort + 1)
-    return defaultSetting
-  }
-}
-
 module.exports.updateSetting = async (newSetting) => {
   const fs = require('fs');
   const path = require('path')
