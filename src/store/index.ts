@@ -9,5 +9,7 @@ export const store = {
   ws: writable<WebSocket | null>(null),
   mouseMoveChannel: writable<RTCDataChannel | null>(null),
 
-  candidates: writable<{ id: string, name: string, url: string }[]>([])
+  candidates: writable<{ id: string, name: string, url: string }[]>([]),
+
+  me: writable<string | null>(null)
 }

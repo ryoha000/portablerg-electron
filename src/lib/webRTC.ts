@@ -358,13 +358,16 @@ const useWebRTC = () => {
     mouseMoveChannel?.send(JSON.stringify(dPoint))
   }
 
-  const connectHost = () => {
+  const connectHost = (id: string | null) => {
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
       return
     }
-    ws.send(JSON.stringify({ type: 'connect', id: 0 }));
+    if (!id) {
+      id = get(store.me)
+    }
+    ws.send(JSON.stringify({ type: 'connect', id: id }));
   }
   return {
     setupWS,
