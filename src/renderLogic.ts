@@ -81,3 +81,8 @@ export const mouseClick = async () => {
 export const keyTap = async (type: 'enter' | 'up' | 'down') => {
   await ipc?.invoke('keyTap', type)
 }
+
+export const login = async () => {
+  const url: string = await ipc?.invoke('login')
+  return url.slice(1)
+}

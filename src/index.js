@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, remote } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, remote, shell } = require('electron');
 const path = require('path');
+const http = require("http");
 const { useMouse } = require('./useMouse')
-const { useKeyboard } = require('./useKeyboard')
+const { useKeyboard } = require('./useKeyboard');
 
 // Live Reload
 require('electron-reload')(__dirname, {
@@ -62,6 +63,20 @@ const createWindow = async () => {
     mainWindow.webContents.send('id', id, name)
     dialog.hide()
     return
+  })
+  ipcMain.handle('login', async () => {
+    const REDIRECT_URL = 'http://localhost:19952'
+    const PORT = 19952
+    await shell.openExternal('https://portablerg.ryoha.moe/#/login')
+    return new Promise((resolve, reject) => {
+      const server = http.createServer(function (req, res) {
+        resolve(req.url)
+        res.writeHead(200);
+        res.end();
+        server.close()
+      });
+      server.listen(PORT);
+    })
   })
   const {
     scroll,

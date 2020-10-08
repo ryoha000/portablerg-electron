@@ -1,45 +1,18 @@
-<script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+<script>
+  import { onMount } from 'svelte';
   import { store } from '../../store';
-  import LoginOriginal from "./LoginOriginal.svelte"
-  import Separator from '../UI/Separator.svelte';
-  import LoginButton from '../UI/LoginButton.svelte'
-  import useFirebase from './use/useFirebase'
-  import useWebRTC from "../../lib/webRTC"
+  import { login } from '../../renderLogic'
+  import { push } from 'svelte-spa-router'
 
-  let me: string | null
-  let isConnect = false
-
-  const { connectHost } = useWebRTC()
-  const unsubscribe = store.me.subscribe(v => {
-    me = v
-    if (v) {
-      console.log(v)
-      connectHost(v)
-    }
+  onMount(async () => {
+    const id = await login()
+    store.me.set(id)
+    push("/top")
   })
-  const { init, google, github } = useFirebase()
-  onMount(() => init())
-  onDestroy(unsubscribe)
-  const loginGoogle = () => {
-    google()
-  }
-  const loginGitHub = () => {
-    github()
-  }
-
-  const stop = (e: MouseEvent) => {
-    e.stopPropagation()
-  }
 </script>
 
 <style>
   .container {
-    position: absolute;
-    user-select: none;
-    width: 100%;
-    height: 100%;
-    z-index: 500;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -48,24 +21,11 @@
   .title {
     margin-bottom: 5rem;
   }
-  .btnContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-    max-width: 500px;
-  }
 </style>
 
-{#if !me}
-  <div class="container" on:click="{stop}">
-    <h1 class="title">portablerg</h1>
-    <div class="btnContainer">
-      <LoginButton label="Sign up with Google" iconName="google" on:click="{loginGoogle}" />
-      <LoginButton label="Sign up with GitHub" iconName="github" on:click="{loginGitHub}" />
-      <Separator title="or" />
-    </div>
-    <LoginOriginal />
-  </div>
-{/if}
+<div class="container">
+  <h1 class="title">portablerg</h1>
+  <h3>
+    お使いのブラウザでログインしてください
+  </h3>
+</div>
