@@ -1,9 +1,11 @@
-import { writable, get } from 'svelte/store';
+import { get } from 'svelte/store';
 import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyTap } from '../renderLogic'
 import { store } from '../store';
+import { sendWSMessageWithID } from './utils';
 
 const useWebRTC = () => {
-  const hostID = writable(0)
+  let id: string = ""
+  store.me.subscribe(v => id = v)
 
   const setupWS = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
@@ -110,7 +112,7 @@ const useWebRTC = () => {
       console.error('ws is NULL !!!')
       return
     }
-    ws.send(message);
+    sendWSMessageWithID(id, { type: 'candidate', ice: candidate }, ws)
   }
 
   const setStreamByID = async (id: string, localVideo: HTMLMediaElement) => {
@@ -173,8 +175,7 @@ const useWebRTC = () => {
             console.log('createOffer() succsess in promise');
             await peer.setLocalDescription(offer);
             console.log('setLocalDescription() succsess in promise');
-            const id = sendSdp(peer.localDescription);
-            hostID.set(id)
+            sendSdp(peer.localDescription);
             store.negotiationneededCounter.update(v => v + 1)
           }
         }
@@ -227,25 +228,23 @@ const useWebRTC = () => {
   }
 
   // 手動シグナリングのための処理を追加する
-  function sendSdp(sessionDescription: RTCSessionDescription | null): number {
+  function sendSdp(sessionDescription: RTCSessionDescription | null) {
     if (!sessionDescription) {
       console.error('sessionDescription is NULL')
-      return 0
+      return
     }
     console.log('---sending sdp ---');
-    // const rId = Math.floor(Math.random() * 100)
-    const rId = 0
-    console.warn('id: ', rId)
-    const m = { type: sessionDescription.type, sdp: sessionDescription.sdp, id: rId }
+    console.log('id: ', id)
+    const m = { type: sessionDescription.type, sdp: sessionDescription.sdp }
     const message = JSON.stringify(m);
     console.log('sending SDP=' + message);
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
-      return 0
+      return
     }
-    ws.send(message);
-    return rId
+    sendWSMessageWithID(id, m, ws)
+    return
   }
 
   // Connectボタンが押されたらWebRTCのOffer処理を開始
@@ -320,7 +319,6 @@ const useWebRTC = () => {
         peerConnection.close();
         store.peerConnection.set(null)
         store.negotiationneededCounter.set(0)
-        const message = JSON.stringify({ type: 'close' });
         console.log('sending close message');
         if (video) {
           video.srcObject = null
@@ -330,7 +328,7 @@ const useWebRTC = () => {
           console.error('ws is NULL !!!')
           return
         }
-        ws.send(message);
+        sendWSMessageWithID(id, { type: 'close' }, ws)
         store.remoteVideoStream.set(null)
         return;
       }
@@ -358,17 +356,6 @@ const useWebRTC = () => {
     mouseMoveChannel?.send(JSON.stringify(dPoint))
   }
 
-  const connectHost = (id: string | null) => {
-    const ws: WebSocket | null = get(store.ws)
-    if (!ws) {
-      console.error('ws is NULL !!!')
-      return
-    }
-    if (!id) {
-      id = get(store.me)
-    }
-    ws.send(JSON.stringify({ type: 'connect', id: id }));
-  }
   return {
     setupWS,
     setStreamByID,
@@ -376,8 +363,6 @@ const useWebRTC = () => {
     connect,
     playRemoteVideo,
     sendMouseMove,
-    hostID,
-    connectHost,
     playVideo
   }
 }

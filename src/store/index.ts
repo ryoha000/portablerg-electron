@@ -11,5 +11,5 @@ export const store = {
 
   candidates: writable<{ id: string, name: string, url: string }[]>([]),
 
-  me: writable<string | null>(null)
+  me: writable("")
 }
