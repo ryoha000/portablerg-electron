@@ -80,6 +80,11 @@ const useWebRTC = () => {
         }
         case 'down': {
           keyTap('down')
+          break
+        }
+        case 'error': {
+          console.error(message.data)
+          break
         }
         default: { 
           console.log("Invalid message"); 

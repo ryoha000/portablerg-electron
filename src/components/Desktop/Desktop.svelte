@@ -6,10 +6,14 @@
 	import { openDialog, listenID, mouseDispose } from '../../renderLogic'
 	import { mouseInit } from '../../renderLogic'
 	import useWindow from "./useWindow";
+import { store } from "../../store";
 
 	let localVideo: HTMLVideoElement
 	// let id: string
 	let name: string
+
+	let id = ""
+	store.me.subscribe(v => id = v)
 
 	const {
 		setupWS,
@@ -25,8 +29,15 @@
 				await setStreamByID(i, localVideo)
 				connect()
 			})
-			setupWS()
+			const ws = setupWS()
 			mouseInit()
+			try {
+				window.addEventListener('unload', () => {
+					ws.send(JSON.stringify({ type: "close", id: id }))
+				})
+			} catch (e) {
+				console.error(e)
+			}
 		} catch (e) {
 			console.error(e)
 		}
@@ -50,6 +61,7 @@
 
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
+	<div>id: {id}</div>
 	<ColumnTemplate label="Windowの選択">
     <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 		<div>現在: {name ?? '未選択'}</div>
