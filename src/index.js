@@ -67,7 +67,7 @@ const createWindow = async () => {
   let reqUrl = ""
   ipcMain.handle('login', async () => {
     if (reqUrl) {
-      return
+      return reqUrl
     }
     const REDIRECT_URL = 'http://localhost:19952'
     const PORT = 19952
