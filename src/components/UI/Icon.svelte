@@ -5,19 +5,19 @@
   const path = () => mdi.get(name)
 </script>
 
-<style>
+
+<svg
+width="{size}"
+height="{size}"
+viewBox="0 0 24 24"
+role="img"
+class="icon"
+on:click
+>
+  <style>
   .icon {
     contain: strict;
   }
-</style>
-
-<svg
-  width="{size}"
-  height="{size}"
-  viewBox="0 0 24 24"
-  role="img"
-  class="icon"
-  on:click
->
+  </style>
   <path d="{path()}" fill="currentColor" />
 </svg>

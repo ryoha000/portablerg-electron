@@ -11,19 +11,16 @@
   })
 </script>
 
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: rgba(255, 255, 255);
-  }
-  .title {
-    margin-bottom: 5rem;
-  }
-</style>
 
 <div class="container">
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(255, 255, 255);
+    }
+  </style>
   <h1 class="title">portablerg</h1>
   <h3>
     お使いのブラウザでログインしてください

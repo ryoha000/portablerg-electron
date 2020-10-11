@@ -16,18 +16,20 @@
   })
 </script>
 
-<style>
-  .container {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 24px;
-  }
-</style>
 
 {#if candidates.length !== 0}
-  <div class="container">
-    {#each candidates as candidate}
-      <SelectWindowDialogItem on:select="{select}" {candidate} />
-    {/each}
+  <div>
+    <style>
+      .rootContainer {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 24px;
+      }
+    </style>
+    <div class="rootContainer">
+      {#each candidates as candidate}
+        <SelectWindowDialogItem on:select="{select}" {candidate} />
+      {/each}
+    </div>
   </div>
 {/if}

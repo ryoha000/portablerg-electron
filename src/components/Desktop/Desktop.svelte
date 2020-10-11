@@ -53,14 +53,14 @@ import { store } from "../../store";
 	}
 </script>
 
-<style>
-	.flexContainer {
-		display: flex;
-	}
-</style>
 
 <!-- svelte-ignore a11y-media-has-caption -->
 <div>
+	<style>
+		.flexContainer {
+			display: flex;
+		}
+	</style>
 	<div>id: {id}</div>
 	<ColumnTemplate label="Windowの選択">
     <video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
