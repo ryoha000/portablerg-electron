@@ -29,8 +29,8 @@ export const getSources = (callback: (sources: { id: string, name: string, url: 
   })
 }
 
-export const getStartPoint = async (title: string): Promise<string> => {
-  const rect = await ipc?.invoke('getStartPoint', title)
+export const getWindowRect = async (title: string): Promise<string> => {
+  const rect = await ipc?.invoke('getWindowRect', title)
   console.log(rect)
   return rect
 }

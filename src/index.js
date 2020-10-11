@@ -78,8 +78,8 @@ const createWindow = async () => {
       server.listen(PORT);
     })
   })
-  ipcMain.handle('getStartPoint', (e, title) => {
-    const { U, DTypes , DStruct} = require('win32-api')
+  ipcMain.handle('getWindowRect', (e, title) => {
+    const { U , DStruct} = require('win32-api')
     const ref = require("ref-napi")
     const StructDi = require('ref-struct-di')
 
@@ -92,20 +92,20 @@ const createWindow = async () => {
       || typeof hWnd === 'bigint' && hWnd > 0
       || typeof hWnd === 'string' && hWnd.length > 0
     ) {
-      console.log('buf: ', hWnd)
-
-      const rectBuf = ref.alloc(DTypes.RECT)
-      const rectAddr = ref.address(rectBuf)
-      const res = user32.GetClientRect(hWnd, rectBuf)
-
+      const Struct = StructDi(ref)
+      const rect = new Struct(DStruct.RECT)()
+      const res = user32.GetWindowRect(hWnd, rect.ref())
       if (!res) {
         console.log('SetWindowTextW failed')
       }
       else {
-        console.log('rectBuf: ', rectBuf)
-        console.log('rectAddr: ', rectAddr)
-        
-        return rectBuf
+        const resRect = {
+          top: rect.top,
+          left: rect.left,
+          right: rect.right,
+          bottom: rect.bottom,
+        }
+        return resRect
       }
     }
     return null

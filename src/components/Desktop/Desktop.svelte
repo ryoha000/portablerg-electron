@@ -3,7 +3,7 @@
 	import ColumnTemplate from './ColumnTemplate.svelte'
 	import useWebRTC from '../../lib/webRTC'
 	import TextButton from '../UI/TextButton.svelte'
-	import { openDialog, listenID, mouseDispose, getStartPoint } from '../../renderLogic'
+	import { openDialog, listenID, mouseDispose, getWindowRect } from '../../renderLogic'
 	import { mouseInit } from '../../renderLogic'
 	import useWindow from "./useWindow";
 import { store } from "../../store";
@@ -70,5 +70,5 @@ import { store } from "../../store";
 			<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 		</div>
 	</ColumnTemplate>
-	<button on:click="{() => getStartPoint(name)}">getStartPoint</button>
+	<button on:click="{() => getWindowRect(name)}">getWindowRect</button>
 </div>
