@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyTap } from '../renderLogic'
+import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyDown, keyUp, getWindowRect } from '../renderLogic'
 import { store } from '../store';
 import { sendWSMessageWithID } from './utils';
 
@@ -70,16 +70,12 @@ const useWebRTC = () => {
           mouseDragging(message.dPoint)
           break
         }
-        case 'enter': {
-          keyTap('enter')
+        case 'down': {
+          keyDown(message.key)
           break
         }
         case 'up': {
-          keyTap('up')
-          break
-        }
-        case 'down': {
-          keyTap('down')
+          keyUp(message.key)
           break
         }
         case 'error': {

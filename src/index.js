@@ -162,10 +162,14 @@ const createWindow = async () => {
     click();
     return;
   });
-  const { keyTap } = useKeyboard()
-  ipcMain.handle('keyTap', (e, type) => {
-    console.log('keyTap', type)
-    keyTap(type)
+  const { keyUp, keyDown } = useKeyboard()
+  ipcMain.handle('keyDown', (e, type) => {
+    console.log('keyDown', type)
+    keyDown(type)
+  })
+  ipcMain.handle('keyUp', (e, type) => {
+    console.log('keyUp', type)
+    keyUp(type)
   })
 };
 

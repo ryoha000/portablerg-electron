@@ -78,8 +78,16 @@ export const mouseClick = async () => {
   await ipc?.invoke('click')
 }
 
-export const keyTap = async (type: 'enter' | 'up' | 'down') => {
+export const keyTap = async (type: 'enter' | 'up' | 'down' | 'control') => {
   await ipc?.invoke('keyTap', type)
+}
+
+export const keyDown = async (type: 'enter' | 'up' | 'down' | 'control') => {
+  await ipc?.invoke('keyDown', type)
+}
+
+export const keyUp = async (type: 'enter' | 'up' | 'down' | 'control') => {
+  await ipc?.invoke('keyUp', type)
 }
 
 export const login = async () => {
