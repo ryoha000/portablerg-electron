@@ -64,15 +64,20 @@ const createWindow = async () => {
     dialog.hide()
     return
   })
+  let reqUrl = ""
   ipcMain.handle('login', async () => {
+    if (reqUrl) {
+      return
+    }
     const REDIRECT_URL = 'http://localhost:19952'
     const PORT = 19952
     await shell.openExternal('https://portablerg.ryoha.moe/#/login')
     return new Promise((resolve, reject) => {
       const server = http.createServer(function (req, res) {
-        resolve(req.url)
         res.writeHead(200);
         res.end();
+        reqUrl = req.url
+        resolve(req.url)
         server.close()
       });
       server.listen(PORT);
