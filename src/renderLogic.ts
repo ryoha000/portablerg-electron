@@ -29,10 +29,10 @@ export const getSources = (callback: (sources: { id: string, name: string, url: 
   })
 }
 
-export const getPrivateIP = async (): Promise<string> => {
-  const ip = await ipc?.invoke('getPrivateIP')
-  console.log(ip)
-  return ip
+export const getStartPoint = async (title: string): Promise<string> => {
+  const rect = await ipc?.invoke('getStartPoint', title)
+  console.log(rect)
+  return rect
 }
 
 export const copy = (text: string) => {
