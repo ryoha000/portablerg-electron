@@ -70,5 +70,5 @@ import { store } from "../../store";
 			<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 		</div>
 	</ColumnTemplate>
-	<button on:click="{() => getWindowRect(name)}">getWindowRect</button>
+	<button on:click="{getWindowRect}">getWindowRect</button>
 </div>

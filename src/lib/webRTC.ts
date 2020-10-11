@@ -18,7 +18,7 @@ const useWebRTC = () => {
     ws.onerror = (err) => {
       console.error('ws onerror() ERR:', err);
     };
-    ws.onmessage = (evt) => {
+    ws.onmessage = async (evt) => {
       console.log('ws onmessage() data:', evt.data);
       const message = JSON.parse(evt.data);
       switch(message.type){
@@ -76,6 +76,11 @@ const useWebRTC = () => {
         }
         case 'up': {
           keyUp(message.key)
+          break
+        }
+        case 'tabletMode': {
+          const rect = await getWindowRect()
+          sendWSMessageWithID(id, { type: 'windowRect', rect: rect }, ws)
           break
         }
         case 'error': {

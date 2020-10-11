@@ -59,7 +59,9 @@ const createWindow = async () => {
     dialog.show('ready-to-show', () => dialog.show())
     return
   })
+  let windowName = ""
   ipcMain.handle('decideWindow', (e, id, name) => {
+    windowName = name
     mainWindow.webContents.send('id', id, name)
     dialog.hide()
     return
@@ -83,14 +85,14 @@ const createWindow = async () => {
       server.listen(PORT);
     })
   })
-  ipcMain.handle('getWindowRect', (e, title) => {
+  ipcMain.handle('getWindowRect', (e) => {
     const { U , DStruct } = require('win32-api')
     const ref = require("ref-napi")
     const StructDi = require('ref-struct-di')
 
     const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
 
-    const lpszWindow = Buffer.from(title, 'ucs2')
+    const lpszWindow = Buffer.from(windowName, 'ucs2')
     const hWnd = user32.FindWindowExW(0, 0, null, lpszWindow)
 
     if (typeof hWnd === 'number' && hWnd > 0
