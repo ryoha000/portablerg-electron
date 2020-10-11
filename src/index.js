@@ -79,7 +79,7 @@ const createWindow = async () => {
     })
   })
   ipcMain.handle('getWindowRect', (e, title) => {
-    const { U , DStruct} = require('win32-api')
+    const { U , DStruct } = require('win32-api')
     const ref = require("ref-napi")
     const StructDi = require('ref-struct-di')
 
