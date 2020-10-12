@@ -9,40 +9,30 @@ const useWebRTC = () => {
 
   const setupWS = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
-    console.log(wsUrl)
     const ws = new WebSocket(wsUrl);
     store.ws.set(ws)
     ws.onopen = (evt) => {
-      console.log('ws open()');
     };
     ws.onerror = (err) => {
       console.error('ws onerror() ERR:', err);
     };
     ws.onmessage = async (evt) => {
-      console.log('ws onmessage() data:', evt.data);
       const message = JSON.parse(evt.data);
       switch(message.type){
         case 'offer': {
-          console.log('Received offer ...');
-          console.log(message.sdp)
           setOffer(message);
           break;
         }
         case 'answer': {
-          console.log('Received answer ...');
-          console.log(message.sdp)
           setAnswer(message);
           break;
         }
         case 'candidate': {
-          console.log('Received ICE candidate ...');
           const candidate = new RTCIceCandidate(message.ice);
-          console.log(candidate);
           addIceCandidate(candidate);
           break;
         }
         case 'close': {
-          console.log('peer is closed ...');
           hangUp();
           break;
         }
@@ -125,9 +115,7 @@ const useWebRTC = () => {
 
   // ICE candidate生成時に送信する
   function sendIceCandidate(candidate: RTCIceCandidate) {
-    console.log('---sending ICE candidate ---');
     const message = JSON.stringify({ type: 'candidate', ice: candidate });
-    console.log('sending candidate=' + message);
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
@@ -151,13 +139,11 @@ const useWebRTC = () => {
       }
     })
     store.localStream.set(stream)
-    console.log('setted localStream: ', stream)
     playVideo(localVideo, stream)
   }
 
   // Videoの再生を開始する
   async function playVideo(element : HTMLMediaElement, stream: MediaStream) {
-    console.log(element.srcObject)
     if (element.srcObject) {
       return
     }
@@ -177,7 +163,6 @@ const useWebRTC = () => {
     // ICE Candidateを収集したときのイベント
     peer.onicecandidate = evt => {
       if (evt.candidate) {
-        console.log(evt.candidate);
         sendIceCandidate(evt.candidate);            
       } else {
         console.log('empty ice event');
@@ -193,9 +178,7 @@ const useWebRTC = () => {
           if(negotiationneededCounter === 0){
             console.warn('createOffer')
             const offer = await peer.createOffer();
-            console.log('createOffer() succsess in promise');
             await peer.setLocalDescription(offer);
-            console.log('setLocalDescription() succsess in promise');
             sendSdp(peer.localDescription);
             store.negotiationneededCounter.update(v => v + 1)
           }
@@ -207,7 +190,6 @@ const useWebRTC = () => {
 
     // ICEのステータスが変更になったときの処理
     peer.oniceconnectionstatechange = function() {
-      console.log('ICE connection Status has changed to ' + peer.iceConnectionState);
       switch (peer.iceConnectionState) {
         case 'closed':
         case 'failed':
@@ -223,7 +205,6 @@ const useWebRTC = () => {
     const mouseMoveChannel = peer.createDataChannel('mouseMove')
     store.mouseMoveChannel.set(mouseMoveChannel)
     mouseMoveChannel.onmessage = function (event) {
-      console.log("データチャネルメッセージ取得:", event.data);
     };
     
     mouseMoveChannel.onopen = function () {
@@ -232,11 +213,9 @@ const useWebRTC = () => {
     };
     
     mouseMoveChannel.onclose = function () {
-      console.log("データチャネルのクローズ");
     };
 
     const localStream: MediaStream | null = get(store.localStream)
-    console.log(localStream)
     // ローカルのMediaStreamを利用できるようにする
     if (localStream) {
       console.log('Adding local stream...');
@@ -254,11 +233,7 @@ const useWebRTC = () => {
       console.error('sessionDescription is NULL')
       return
     }
-    console.log('---sending sdp ---');
-    console.log('id: ', id)
     const m = { type: sessionDescription.type, sdp: sessionDescription.sdp }
-    const message = JSON.stringify(m);
-    console.log('sending SDP=' + message);
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
@@ -272,7 +247,6 @@ const useWebRTC = () => {
   function connect() {
     const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (!peerConnection) {
-      console.log('make Offer');
       store.peerConnection.set(prepareNewConnection(true))
     }
     else {
@@ -282,7 +256,6 @@ const useWebRTC = () => {
 
   // Answer SDPを生成する
   async function makeAnswer() {
-    console.log('sending Answer. Creating remote session description...' );
     const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (!peerConnection) {
       console.error('peerConnection NOT exist!');
@@ -290,9 +263,7 @@ const useWebRTC = () => {
     }
     try{
       let answer = await peerConnection.createAnswer();
-      console.log('createAnswer() succsess in promise');
       await peerConnection.setLocalDescription(answer);
-      console.log('setLocalDescription() succsess in promise');
       sendSdp(peerConnection.localDescription);
     } catch(err){
       console.error(err);
@@ -309,7 +280,6 @@ const useWebRTC = () => {
     store.peerConnection.set(newPeerConnection)
     try{
       await newPeerConnection.setRemoteDescription(sessionDescription);
-      console.log('setRemoteDescription(offer) succsess in promise');
       await makeAnswer();
       // 怪しい
     } catch(err){
@@ -326,7 +296,6 @@ const useWebRTC = () => {
     }
     try {
       await peerConnection.setRemoteDescription(sessionDescription);
-      console.log('setRemoteDescription(answer) succsess in promise');
     } catch(err){
       console.error('setRemoteDescription(answer) ERROR: ', err);
     }
@@ -340,7 +309,6 @@ const useWebRTC = () => {
         peerConnection.close();
         store.peerConnection.set(null)
         store.negotiationneededCounter.set(0)
-        console.log('sending close message');
         if (video) {
           video.srcObject = null
         }

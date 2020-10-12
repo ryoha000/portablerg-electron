@@ -53,7 +53,6 @@ const createWindow = async () => {
     })
     dialog.webContents.openDevTools()
     setTimeout(() => {
-      console.log('send sources')
       dialog.send('sources', sources)
     }, 500);
     dialog.show('ready-to-show', () => dialog.show())
@@ -102,18 +101,15 @@ const createWindow = async () => {
       const Struct = StructDi(ref)
       const rect = new Struct(DStruct.RECT)()
       const res = user32.GetWindowRect(hWnd, rect.ref())
-      if (!res) {
-        console.log('SetWindowTextW failed')
-      }
-      else {
+      if (res) {
         const resRect = {
           top: rect.top,
           left: rect.left,
           right: rect.right,
           bottom: rect.bottom,
         }
-        return resRect
       }
+      return resRect
     }
     return null
   })
@@ -138,57 +134,46 @@ const createWindow = async () => {
     return
   })
   ipcMain.handle('scroll', (e, dPoint) => {
-    console.log('scroll', dPoint)
     scroll(dPoint)
     return
   })
   ipcMain.handle("move", (e, dPoint) => {
-    console.log('move: ', dPoint)
     move(dPoint);
     return;
   });
   ipcMain.handle("dragStart", (e) => {
-    console.log("dragStart")
     dragEdge({ down: 'down', button: 'left' });
     return;
   });
   ipcMain.handle("dragEnd", (e) => {
-    console.log("dragEnd")
     dragEdge({ down: 'up', button: 'left' });
     return;
   });
   ipcMain.handle("dragging", (e, dPoint) => {
-    console.log('dragging: ', dPoint)
     dragging(dPoint);
     return;
   });
   ipcMain.handle("click", (e) => {
-    console.log('click from ipcMain')
     click();
     return;
   });
   ipcMain.handle("moveClick", (e, point) => {
-    console.log('moveClick :', point)
     moveClick(point);
     return;
   });
   ipcMain.handle("moveDragStart", (e, point) => {
-    console.log("moveDragStart: ", point)
     moveDragStart(point);
     return;
   });
   ipcMain.handle("moveDragging", (e, point) => {
-    console.log('moveDragging: ', point)
     moveDragging(point);
     return;
   });
   const { keyUp, keyDown } = useKeyboard()
   ipcMain.handle('keyDown', (e, type) => {
-    console.log('keyDown', type)
     keyDown(type)
   })
   ipcMain.handle('keyUp', (e, type) => {
-    console.log('keyUp', type)
     keyUp(type)
   })
 };

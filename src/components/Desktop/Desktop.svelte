@@ -6,7 +6,7 @@
 	import { openDialog, listenID, mouseDispose, getWindowRect } from '../../renderLogic'
 	import { mouseInit } from '../../renderLogic'
 	import useWindow from "./useWindow";
-import { store } from "../../store";
+	import { store } from "../../store";
 
 	let localVideo: HTMLVideoElement
 	// let id: string
@@ -48,7 +48,6 @@ import { store } from "../../store";
 
 	const select = async () => {
 		const sources = await useWindow()
-		console.log(sources)
 		await openDialog(sources)
 	}
 </script>

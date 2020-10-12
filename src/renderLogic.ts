@@ -17,21 +17,18 @@ export const decideWindow = async (id: string, name: string) =>{
 
 export const listenID = (callback: (id: string, name: string) => Promise<void>) => {
   ipc?.on('id', async (e: unknown, id: string, name: string) => {
-    console.log('id: ', id, 'name: ', name)
     await callback(id, name)
   })
 }
 
 export const getSources = (callback: (sources: { id: string, name: string, url: string }[]) => void) => {
   ipc?.on('sources', (e: unknown, sources: { id: string, name: string, url: string }[]) => {
-    console.log('sources: ', sources)
     callback(sources)
   })
 }
 
 export const getWindowRect = async (): Promise<{ top: number, left: number, buttom: number, right: number }> => {
   const rect = await ipc?.invoke('getWindowRect')
-  console.log(rect)
   return rect
 }
 
@@ -74,7 +71,6 @@ export const mouseDragging = async (dPoint: Point) => {
 }
 
 export const mouseClick = async () => {
-  console.log('click from renderLogic')
   await ipc?.invoke('click')
 }
 
@@ -87,7 +83,6 @@ export const mouseMoveDragging = async (point: Point) => {
 }
 
 export const mouseMoveClick = async (point: Point) => {
-  console.log('moveClick from renderLogic: ', point)
   await ipc?.invoke('moveClick', point)
 }
 
