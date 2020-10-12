@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyDown, keyUp, getWindowRect } from '../renderLogic'
+import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyDown, keyUp, getWindowRect, mouseMoveClick, mouseMoveDragStart, mouseMoveDragging } from '../renderLogic'
 import { store } from '../store';
 import { sendWSMessageWithID } from './utils';
 
@@ -81,6 +81,21 @@ const useWebRTC = () => {
         case 'tabletMode': {
           const rect = await getWindowRect()
           sendWSMessageWithID(id, { type: 'windowRect', rect: rect }, ws)
+          break
+        }
+        case 'moveTap': {
+          const point = message.point
+          mouseMoveClick(point)
+          break
+        }
+        case 'moveDragStart': {
+          const point = message.point
+          mouseMoveDragStart(point)
+          break
+        }
+        case 'moveDragging': {
+          const point = message.point
+          mouseMoveDragging(point)
           break
         }
         case 'error': {

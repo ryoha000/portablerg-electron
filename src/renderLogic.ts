@@ -78,6 +78,19 @@ export const mouseClick = async () => {
   await ipc?.invoke('click')
 }
 
+export const mouseMoveDragStart = async (point: Point) => {
+  await ipc?.invoke('moveDragStart', point)
+}
+
+export const mouseMoveDragging = async (point: Point) => {
+  await ipc?.invoke('moveDragging', point)
+}
+
+export const mouseMoveClick = async (point: Point) => {
+  console.log('moveClick from renderLogic: ', point)
+  await ipc?.invoke('moveClick', point)
+}
+
 export const keyTap = async (type: 'enter' | 'up' | 'down' | 'control') => {
   await ipc?.invoke('keyTap', type)
 }

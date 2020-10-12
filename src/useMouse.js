@@ -10,7 +10,7 @@ module.exports.useMouse = () => {
 	let mousePoint = { x: 0, y: 0 }
 
 	const init = () => {
-		robot.setMouseDelay(2);
+		robot.setMouseDelay(0);
 		timer = setInterval(() => {
 			mousePoint = robot.getMousePos()
 		}, 1000)
@@ -48,6 +48,17 @@ module.exports.useMouse = () => {
 			y: p.y + dPoint.y
 		}
 	}
+	const moveClick = (point) => {
+		robot.moveMouse(point.x, point.y)
+		robot.mouseClick('left', false)
+	}
+	const moveDragStart = (point) => {
+		robot.moveMouse(point.x, point.y)
+		robot.mouseToggle('down', 'left')
+	}
+	const moveDragging = (point) => {
+		robot.moveMouse(point.x, point.y)
+	}
 	return {
 		init,
 		dispose,
@@ -55,6 +66,9 @@ module.exports.useMouse = () => {
 		scroll,
 		click,
 		dragEdge,
-		dragging
+		dragging,
+		moveClick,
+		moveDragStart,
+		moveDragging
 	}
 }

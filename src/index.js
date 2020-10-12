@@ -124,7 +124,10 @@ const createWindow = async () => {
     move,
     dragEdge,
     dragging,
-    click
+    click,
+    moveClick,
+    moveDragStart,
+    moveDragging
   } = useMouse()
   ipcMain.handle('init', (e) => {
     init()
@@ -162,6 +165,21 @@ const createWindow = async () => {
   ipcMain.handle("click", (e) => {
     console.log('click from ipcMain')
     click();
+    return;
+  });
+  ipcMain.handle("moveClick", (e, point) => {
+    console.log('moveClick :', point)
+    moveClick(point);
+    return;
+  });
+  ipcMain.handle("moveDragStart", (e, point) => {
+    console.log("moveDragStart: ", point)
+    moveDragStart(point);
+    return;
+  });
+  ipcMain.handle("moveDragging", (e, point) => {
+    console.log('moveDragging: ', point)
+    moveDragging(point);
     return;
   });
   const { keyUp, keyDown } = useKeyboard()
