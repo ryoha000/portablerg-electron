@@ -33,7 +33,7 @@
 			mouseInit()
 			try {
 				window.addEventListener('unload', () => {
-					ws.send(JSON.stringify({ type: "close", id: id }))
+					ws.send(JSON.stringify({ type: "reset", id: id }))
 				})
 			} catch (e) {
 				console.error(e)
