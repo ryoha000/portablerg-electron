@@ -7,8 +7,8 @@ export const store = {
   negotiationneededCounter: writable(0),
   remoteVideoStream: writable<null | MediaStream>(null),
   ws: writable<WebSocket | null>(null),
-  mouseMoveChannel: writable<RTCDataChannel | null>(null),
   isSetAnswer: writable(false),
+  dataChannel: writable<RTCDataChannel | null>(null),
 
   candidates: writable<{ id: string, name: string, url: string }[]>([]),
 

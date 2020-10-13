@@ -15,6 +15,9 @@ const useWebRTC = () => {
     store.ws.set(ws)
     ws.onopen = (evt) => {
     };
+    ws.onclose = () => {
+      setupWS()
+    }
     ws.onerror = (err) => {
       console.error('ws onerror() ERR:', err);
     };
@@ -169,6 +172,79 @@ const useWebRTC = () => {
     const pc_config = {"iceServers":[ {"urls":"stun:stun.webrtc.ecl.ntt.com:3478"} ]};
     const peer = new RTCPeerConnection(pc_config);
 
+    const dataChannel = peer.createDataChannel('mouseMove')
+    dataChannel.onmessage = async (event) => {
+      const message = JSON.parse(event.data);
+      switch (message.type) {
+        case 'scroll': {
+          mouseScroll(message.dPoint)
+          break
+        }
+        case 'move': {
+          mouseMove(message.dPoint)
+          break
+        }
+        case 'click': {
+          mouseClick()
+          break
+        }
+        case 'dragStart': {
+          mouseDragStart()
+          break
+        }
+        case 'dragEnd': {
+          mouseDragEnd()
+          break
+        }
+        case 'dragging': {
+          mouseDragging(message.dPoint)
+          break
+        }
+        case 'down': {
+          keyDown(message.key)
+          break
+        }
+        case 'up': {
+          keyUp(message.key)
+          break
+        }
+        case 'tabletMode': {
+          const rect = await getWindowRect()
+          const dc: RTCDataChannel | null = get(store.dataChannel)
+          if (dc) {
+            dc.send(JSON.stringify({ type: 'windowRect', rect: rect }))
+          }
+          break
+        }
+        case 'moveTap': {
+          const point = message.point
+          mouseMoveClick(point)
+          break
+        }
+        case 'moveDragStart': {
+          const point = message.point
+          mouseMoveDragStart(point)
+          break
+        }
+        case 'moveDragging': {
+          const point = message.point
+          mouseMoveDragging(point)
+          break
+        }
+        case 'error': {
+          console.error(message.data)
+          break
+        }
+        default: { 
+          console.log("Invalid message"); 
+          break;              
+        }         
+      }
+    };
+
+    dataChannel.onerror = (e) => { console.error(e) }
+    store.dataChannel.set(dataChannel)
+
     // ICE Candidateを収集したときのイベント
     peer.onicecandidate = evt => {
       if (evt.candidate) {
@@ -210,18 +286,28 @@ const useWebRTC = () => {
           break;
       }
     };
-    const mouseMoveChannel = peer.createDataChannel('mouseMove')
-    store.mouseMoveChannel.set(mouseMoveChannel)
-    mouseMoveChannel.onmessage = function (event) {
-    };
-    
-    mouseMoveChannel.onopen = function () {
-      // mouseMoveChannel?.send(new Blob([JSON.stringify({ x: 0, y: -10 })], { type: 'text/plain' }));
-      mouseMoveChannel?.send(JSON.stringify({ x: 0, y: -10 }));
-    };
-    
-    mouseMoveChannel.onclose = function () {
-    };
+
+    // peer.ondatachannel = (e) => {
+    //   const mouseMoveChannel = e.channel;
+    //   store.mouseMoveChannel.set(mouseMoveChannel)
+    //   mouseMoveChannel.onmessage = function (event) {
+    //     console.log(event)
+    //   };
+      
+    //   mouseMoveChannel.onopen = function () {
+    //     console.log('open mouse move')
+    //     // mouseMoveChannel?.send(new Blob([JSON.stringify({ x: 0, y: -10 })], { type: 'text/plain' }));
+    //     mouseMoveChannel?.send(JSON.stringify({ x: 0, y: -10 }));
+    //   };
+  
+    //   mouseMoveChannel.onerror = (e) => { console.error(e) }
+      
+    //   mouseMoveChannel.onclose = function () {
+    //   };
+    // }
+    // peer.addEventListener('datachannel', event => {
+    //   console.log(event)
+    // });
 
     const localStream: MediaStream | null = get(store.localStream)
     // ローカルのMediaStreamを利用できるようにする
@@ -307,18 +393,12 @@ const useWebRTC = () => {
     }
   }
 
-  function sendMouseMove(dPoint: { x: number, y: number }) {
-    const mouseMoveChannel: RTCDataChannel | null = get(store.mouseMoveChannel)
-    mouseMoveChannel?.send(JSON.stringify(dPoint))
-  }
-
   return {
     setupWS,
     setStreamByID,
     hangUp,
     connect,
     playRemoteVideo,
-    sendMouseMove,
     playVideo
   }
 }
