@@ -6,6 +6,8 @@ import { sendWSMessageWithID } from './utils';
 const useWebRTC = () => {
   let id: string = ""
   store.me.subscribe(v => id = v)
+  let isSetAnswer = false
+  store.isSetAnswer.subscribe(v => isSetAnswer = v)
 
   const setupWS = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
@@ -18,13 +20,19 @@ const useWebRTC = () => {
     };
     ws.onmessage = async (evt) => {
       const message = JSON.parse(evt.data);
-      switch(message.type){
-        case 'offer': {
-          setOffer(message);
-          break;
-        }
+      switch (message.type) {
         case 'answer': {
-          setAnswer(message);
+          if (!isSetAnswer) {
+            console.log('get answer')
+            setAnswer(message);
+            store.isSetAnswer.set(true)
+          } else {
+            console.warn('get another answer')
+            hangUp()
+            setTimeout(() => {
+              connect()
+            }, 500)
+          }
           break;
         }
         case 'candidate': {
@@ -176,7 +184,6 @@ const useWebRTC = () => {
         if(isOffer){
           const negotiationneededCounter = get(store.negotiationneededCounter)
           if(negotiationneededCounter === 0){
-            console.warn('createOffer')
             const offer = await peer.createOffer();
             await peer.setLocalDescription(offer);
             sendSdp(peer.localDescription);
@@ -246,47 +253,13 @@ const useWebRTC = () => {
   // Connectボタンが押されたらWebRTCのOffer処理を開始
   function connect() {
     const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
-    if (!peerConnection) {
-      store.peerConnection.set(prepareNewConnection(true))
-    }
-    else {
+    if (peerConnection) {
+      hangUp()
       console.warn('peer already exist.');
     }
+    store.peerConnection.set(prepareNewConnection(true))
   }
 
-  // Answer SDPを生成する
-  async function makeAnswer() {
-    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
-    if (!peerConnection) {
-      console.error('peerConnection NOT exist!');
-      return;
-    }
-    try{
-      let answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      sendSdp(peerConnection.localDescription);
-    } catch(err){
-      console.error(err);
-    }
-  }
-
-  // Offer側のSDPをセットする処理
-  async function setOffer(sessionDescription: RTCSessionDescription) {
-    const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
-    if (peerConnection) {
-      console.error('peerConnection alreay exist!');
-    }
-    const newPeerConnection = prepareNewConnection(false);
-    store.peerConnection.set(newPeerConnection)
-    try{
-      await newPeerConnection.setRemoteDescription(sessionDescription);
-      await makeAnswer();
-      // 怪しい
-    } catch(err){
-      console.error('setRemoteDescription(offer) ERROR: ', err);
-    }
-  }
-  
   // Answer側のSDPをセットする場合
   async function setAnswer(sessionDescription: RTCSessionDescription) {
     const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
@@ -302,33 +275,26 @@ const useWebRTC = () => {
   }
 
   // P2P通信を切断する
-  function hangUp(video?: HTMLMediaElement){
+  function hangUp() {
     const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
     if (peerConnection) {
       if(peerConnection.iceConnectionState !== 'closed'){
         peerConnection.close();
         store.peerConnection.set(null)
         store.negotiationneededCounter.set(0)
-        if (video) {
-          video.srcObject = null
-        }
+        store.remoteVideoStream.set(null)
+        store.isSetAnswer.set(false)
+
         const ws: WebSocket | null = get(store.ws)
         if (!ws) {
           console.error('ws is NULL !!!')
           return
         }
         sendWSMessageWithID(id, { type: 'close' }, ws)
-        store.remoteVideoStream.set(null)
         return;
       }
     }
     console.log('peerConnection is closed.');
-  }
-
-  // ビデオエレメントを初期化する
-  function cleanupVideoElement(element: HTMLMediaElement) {
-    element.pause();
-    element.srcObject = null;
   }
 
   function playRemoteVideo(remoteVideo: HTMLMediaElement) {
