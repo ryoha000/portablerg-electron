@@ -147,6 +147,7 @@ const useWebRTC = () => {
       }
     })
     store.localStream.set(stream)
+    localVideo.srcObject = null
     playVideo(localVideo, stream)
   }
 
