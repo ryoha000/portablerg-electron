@@ -13,10 +13,11 @@ const useWebRTC = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
     const ws = new WebSocket(wsUrl);
     store.ws.set(ws)
-    ws.onopen = (evt) => {
-    };
     ws.onclose = () => {
-      setupWS()
+      const newWS = setupWS()
+      newWS.onopen = () => {
+        sendWSMessageWithID(id, { type: 'reconnectOffer' }, newWS)
+      }
     }
     ws.onerror = (err) => {
       console.error('ws onerror() ERR:', err);
@@ -46,58 +47,6 @@ const useWebRTC = () => {
         case 'close': {
           hangUp();
           break;
-        }
-        case 'scroll': {
-          mouseScroll(message.dPoint)
-          break
-        }
-        case 'move': {
-          mouseMove(message.dPoint)
-          break
-        }
-        case 'click': {
-          mouseClick()
-          break
-        }
-        case 'dragStart': {
-          mouseDragStart()
-          break
-        }
-        case 'dragEnd': {
-          mouseDragEnd()
-          break
-        }
-        case 'dragging': {
-          mouseDragging(message.dPoint)
-          break
-        }
-        case 'down': {
-          keyDown(message.key)
-          break
-        }
-        case 'up': {
-          keyUp(message.key)
-          break
-        }
-        case 'tabletMode': {
-          const rect = await getWindowRect()
-          sendWSMessageWithID(id, { type: 'windowRect', rect: rect }, ws)
-          break
-        }
-        case 'moveTap': {
-          const point = message.point
-          mouseMoveClick(point)
-          break
-        }
-        case 'moveDragStart': {
-          const point = message.point
-          mouseMoveDragStart(point)
-          break
-        }
-        case 'moveDragging': {
-          const point = message.point
-          mouseMoveDragging(point)
-          break
         }
         case 'error': {
           console.error(message.data)

@@ -3,5 +3,13 @@ export const sendWSMessageWithID = (
   obj: Object,
   ws: WebSocket
 ) => {
-  ws.send(JSON.stringify({ ...obj, id: id }))
+  try {
+    ws.send(JSON.stringify({ ...obj, id: id }))
+  } catch (e) {
+    console.error(e)
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ ...obj, id: id }))
+      console.log('送れた', JSON.stringify({ ...obj, id: id }))
+    }
+  }
 }
