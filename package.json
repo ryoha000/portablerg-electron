@@ -1,7 +1,13 @@
 {
   "name": "portablerg",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryoha000/portablerg-electron.git"
+  },
+  "author": "ryoha",
+  "description": "simple remote desktop for GAME",
   "scripts": {
     "start": "concurrently \"npm:svelte-dev\" \"electron-forge start\"",
     "package": "electron-forge package",
@@ -18,11 +24,23 @@
       "packagerConfig": {
         "icon": "public/icon.ico"
       },
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "ryoha000",
+              "name": "portablerg-electron"
+            },
+            "prerelease": true
+          }
+        }
+      ],
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "crawler"
+            "name": "portablerg"
           }
         },
         {
