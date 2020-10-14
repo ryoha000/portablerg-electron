@@ -12,6 +12,7 @@
 		'/': Login,
 		'/select': Select,
 	}
+
 	onMount(() => {
 		getSources((e) => {
 			store.candidates.set(e)

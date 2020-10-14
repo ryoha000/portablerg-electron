@@ -8,25 +8,23 @@ const useWebRTC = () => {
   store.me.subscribe(v => id = v)
   let isSetAnswer = false
   store.isSetAnswer.subscribe(v => isSetAnswer = v)
-  store.ws.subscribe(v => {
-    if (!v) {
-      setTimeout(() => {
-        if (!get(store.ws)) {
-          console.log('reconnecting to websocket server')
-          const newWS = setupWS()
-          newWS.onopen = () => {
-            sendWSMessageWithID(id, { type: 'reconnectOffer' }, newWS)
-          }
-        }
-      }, 500)
-    }
-  })
 
   const setupWS = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
     const ws = new WebSocket(wsUrl);
     store.ws.set(ws)
+    ws.onopen = () => {
+      console.log('ws open()')
+      if (id) {
+        console.log('reconnecting to websocket server')
+        const newWS = setupWS()
+        newWS.onopen = () => {
+          sendWSMessageWithID(id, { type: 'reconnectOffer' }, newWS)
+        }
+      }
+    }
     ws.onclose = () => {
+      console.log('ws closed... set null')
       store.ws.set(null)
     }
     ws.onerror = (err) => {
@@ -96,10 +94,10 @@ const useWebRTC = () => {
 
   // ICE candidate生成時に送信する
   function sendIceCandidate(candidate: RTCIceCandidate) {
-    const message = JSON.stringify({ type: 'candidate', ice: candidate });
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
+      setupWS()
       return
     }
     sendWSMessageWithID(id, { type: 'candidate', ice: candidate }, ws)
@@ -244,11 +242,13 @@ const useWebRTC = () => {
 
     // ICEのステータスが変更になったときの処理
     peer.oniceconnectionstatechange = function() {
+      const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
       switch (peer.iceConnectionState) {
         case 'connected': {
           const ws: WebSocket | null = get(store.ws)
           if (!ws) {
             console.error('ws is NULL !!!!')
+            setupWS()
             return
           }
           sendWSMessageWithID(id, { type: 'connected' }, ws)
@@ -256,13 +256,11 @@ const useWebRTC = () => {
         }
         case 'closed':
         case 'failed':
-          const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
-          if (peerConnection) {
-            hangUp();
-          }
-          break;
         case 'disconnected':
-          break;
+        if (peerConnection) {
+          hangUp();
+        }
+        break;
       }
     };
 
@@ -288,6 +286,7 @@ const useWebRTC = () => {
     const ws: WebSocket | null = get(store.ws)
     if (!ws) {
       console.error('ws is NULL !!!')
+      setupWS()
       return
     }
     sendWSMessageWithID(id, m, ws)
@@ -332,6 +331,7 @@ const useWebRTC = () => {
         const ws: WebSocket | null = get(store.ws)
         if (!ws) {
           console.error('ws is NULL !!!')
+          setupWS()
           return
         }
         sendWSMessageWithID(id, { type: 'close' }, ws)

@@ -7,6 +7,7 @@
 	import { mouseInit } from '../../renderLogic'
 	import useWindow from "./useWindow";
 	import { store } from "../../store";
+import { get } from "svelte/store";
 
 	let localVideo: HTMLVideoElement
 	// let id: string
@@ -20,6 +21,17 @@
 		setStreamByID,
 		connect
 	} = useWebRTC()
+
+  store.ws.subscribe(v => {
+    if (!v) {
+      setTimeout(() => {
+        if (!get(store.ws)) {
+          console.log('reconnecting to websocket server')
+          setupWS()
+        }
+      }, 1000)
+    }
+	})
 
 	onMount(async () => {
 		try {
