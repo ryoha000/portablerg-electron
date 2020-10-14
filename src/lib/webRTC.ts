@@ -8,19 +8,32 @@ const useWebRTC = () => {
   store.me.subscribe(v => id = v)
   let isSetAnswer = false
   store.isSetAnswer.subscribe(v => isSetAnswer = v)
+  store.ws.subscribe(v => {
+    if (!v) {
+      setTimeout(() => {
+        if (!get(store.ws)) {
+          console.log('reconnecting to websocket server')
+          const newWS = setupWS()
+          newWS.onopen = () => {
+            sendWSMessageWithID(id, { type: 'reconnectOffer' }, newWS)
+          }
+        }
+      }, 500)
+    }
+  })
 
   const setupWS = () => {
     const wsUrl = `wss://ryoha.trap.show/portablerg-server/`;
     const ws = new WebSocket(wsUrl);
     store.ws.set(ws)
     ws.onclose = () => {
-      const newWS = setupWS()
-      newWS.onopen = () => {
-        sendWSMessageWithID(id, { type: 'reconnectOffer' }, newWS)
-      }
+      store.ws.set(null)
     }
     ws.onerror = (err) => {
       console.error('ws onerror() ERR:', err);
+      setTimeout(() => {
+        store.ws.set(null)
+      }, 500)
     };
     ws.onmessage = async (evt) => {
       const message = JSON.parse(evt.data);
@@ -38,6 +51,14 @@ const useWebRTC = () => {
             }, 500)
           }
           break;
+        }
+        case 'pleaseOffer': {
+          console.warn('wanted another offer')
+          hangUp()
+          setTimeout(() => {
+            connect()
+          }, 500)
+          break
         }
         case 'candidate': {
           const candidate = new RTCIceCandidate(message.ice);
@@ -224,6 +245,15 @@ const useWebRTC = () => {
     // ICEのステータスが変更になったときの処理
     peer.oniceconnectionstatechange = function() {
       switch (peer.iceConnectionState) {
+        case 'connected': {
+          const ws: WebSocket | null = get(store.ws)
+          if (!ws) {
+            console.error('ws is NULL !!!!')
+            return
+          }
+          sendWSMessageWithID(id, { type: 'connected' }, ws)
+          break
+        }
         case 'closed':
         case 'failed':
           const peerConnection: RTCPeerConnection | null = get(store.peerConnection)
