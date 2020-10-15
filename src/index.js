@@ -44,7 +44,6 @@ const createWindow = async () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
-  
   let dialogWindow
   ipcMain.handle('openDialog', (e, sources) => {
     dialogWindow = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
@@ -60,6 +59,10 @@ const createWindow = async () => {
     setTimeout(() => {
       dialogWindow.send('sources', sources)
     }, 500);
+    // updateの確認
+    setTimeout(() => {
+      addUpdateProcess()
+    }, 1000)
     dialogWindow.show('ready-to-show', () => dialogWindow.show())
     return
   })
@@ -72,37 +75,6 @@ const createWindow = async () => {
   })
   let reqUrl = ""
   ipcMain.handle('login', async () => {
-    try {
-      autoUpdater.setFeedURL("https://github.com/ryoha000/portablerg-electron/releases/latest/download");
-      autoUpdater.checkForUpdates()
-      autoUpdater.on("update-downloaded", () => {
-        index = dialog.showMessageBox({
-          message: "アップデート",
-          detail: "アップデートがあったため自動でアップデートしました。",
-        });
-        autoUpdater.quitAndInstall();
-      });
-      autoUpdater.on("update-not-available", () => {
-        dialog.showMessageBox({
-          message: "アップデートはありません",
-          buttons: ["OK"]
-        });
-      });
-      autoUpdater.on("error", () => {
-        dialog.showMessageBox({
-          message: "アップデートエラーが起きました",
-          buttons: ["OK"]
-        });
-      });
-    } catch (e) {
-      try {
-        dialog.showErrorBox({
-          title: "update",
-          content: e.toString()
-        });
-      } catch {}
-      console.error(e)
-    }
     if (reqUrl) {
       return reqUrl
     }
@@ -144,8 +116,8 @@ const createWindow = async () => {
           right: rect.right,
           bottom: rect.bottom,
         }
+        return resRect
       }
-      return resRect
     }
     return null
   })
@@ -212,6 +184,52 @@ const createWindow = async () => {
   ipcMain.handle('keyUp', (e, type) => {
     keyUp(type)
   })
+
+  let isRequest = false
+  const addUpdateProcess = () => {
+    try {
+      if (!isRequest) {
+        isRequest = true
+        mainWindow.webContents.send('error', 'update start')
+        autoUpdater.setFeedURL("https://github.com/ryoha000/portablerg-electron/releases/latest/download");
+        mainWindow.webContents.send('error', 'fired feedURL')
+        autoUpdater.checkForUpdates()
+        mainWindow.webContents.send('error', 'fired check')
+        autoUpdater.on("update-downloaded", () => {
+          mainWindow.webContents.send('error', 'update existed')
+          dialog.showMessageBox({
+            type: 'question',
+            buttons: ['再起動', 'あとで'],
+            defaultId: 0,
+            message: '新しいバージョンをダウンロードしました。再起動しますか？',
+            detail: message
+          }, response => {
+            if (response === 0) {
+              setTimeout(() => autoUpdater.quitAndInstall(), 100);
+            }
+          });
+        });
+        autoUpdater.on("update-not-available", () => {
+          mainWindow.webContents.send('error', 'update not existed')
+        });
+        autoUpdater.on("error", (e) => {
+          mainWindow.webContents.send('error', 'err')
+          dialog.showMessageBox({
+            message: "アップデートエラーが起きました",
+            buttons: ["OK"]
+          });
+          mainWindow.webContents.send('error', e.toString())
+          mainWindow.webContents.send('error', e)
+        });
+      }
+    } catch (e) {
+      try {
+        mainWindow.webContents.send('error', e.toString())
+        mainWindow.webContents.send('error', e)
+      } catch {}
+      console.error(e)
+    }
+  }
 };
 
 // This method will be called when Electron has finished

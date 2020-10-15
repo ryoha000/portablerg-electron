@@ -16,6 +16,9 @@ export const decideWindow = async (id: string, name: string) =>{
 }
 
 export const listenID = (callback: (id: string, name: string) => Promise<void>) => {
+  ipc?.on('error', (e: unknown, err: any) => {
+    console.log(err)
+  })
   ipc?.on('id', async (e: unknown, id: string, name: string) => {
     await callback(id, name)
   })
@@ -29,6 +32,7 @@ export const getSources = (callback: (sources: { id: string, name: string, url: 
 
 export const getWindowRect = async (): Promise<{ top: number, left: number, buttom: number, right: number }> => {
   const rect = await ipc?.invoke('getWindowRect')
+  console.log(rect)
   return rect
 }
 

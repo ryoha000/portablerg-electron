@@ -178,6 +178,7 @@ const useWebRTC = () => {
         }
         case 'tabletMode': {
           const rect = await getWindowRect()
+          console.log(rect)
           const dc: RTCDataChannel | null = get(store.dataChannel)
           if (dc) {
             dc.send(JSON.stringify({ type: 'windowRect', rect: rect }))
