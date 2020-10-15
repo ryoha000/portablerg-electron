@@ -4,6 +4,12 @@ const http = require("http");
 const { useMouse } = require('./useMouse')
 const { useKeyboard } = require('./useKeyboard');
 
+const { U , DStruct } = require('win32-api')
+const ref = require("ref-napi")
+const StructDi = require('ref-struct-di')
+
+const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
+
 // Live Reload
 require('electron-reload')(__dirname, {
   electron: path.join(__dirname, '../node_modules', '.bin', 'electron'),
@@ -23,6 +29,7 @@ try {
 const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    // RELEASE: to 400
     width: 800,
     height: 600,
     webPreferences: {
@@ -37,11 +44,13 @@ const createWindow = async () => {
   mainWindow.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
     callback(true)
   })
+  // RELEASE: in
+  // mainWindow.removeMenu()
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, '../public/index.html'));
 
-  // Open the DevTools.
+  // RELEASE: out
   mainWindow.webContents.openDevTools();
 
   let dialogWindow
@@ -55,7 +64,7 @@ const createWindow = async () => {
     dialogWindow.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
       callback(true)
     })
-    dialogWindow.webContents.openDevTools()
+    dialogWindow.removeMenu()
     setTimeout(() => {
       dialogWindow.send('sources', sources)
     }, 500);
@@ -93,11 +102,6 @@ const createWindow = async () => {
     })
   })
   ipcMain.handle('getWindowRect', (e) => {
-    const { U , DStruct } = require('win32-api')
-    const ref = require("ref-napi")
-    const StructDi = require('ref-struct-di')
-
-    const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
 
     const lpszWindow = Buffer.from(windowName, 'ucs2')
     const hWnd = user32.FindWindowExW(0, 0, null, lpszWindow)
@@ -116,6 +120,7 @@ const createWindow = async () => {
           right: rect.right,
           bottom: rect.bottom,
         }
+        console.log(resRect)
         return resRect
       }
     }
