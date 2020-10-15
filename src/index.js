@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, autoUpdater, dialog } = require('electron');
 const path = require('path');
 const http = require("http");
 const { useMouse } = require('./useMouse')
@@ -11,9 +11,13 @@ require('electron-reload')(__dirname, {
 });
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  // eslint-disable-line global-require
-  app.quit();
+try {
+  if (require('electron-squirrel-startup')) {
+    // eslint-disable-line global-require
+    app.quit();
+  }
+} catch (e) {
+  console.error(e)
 }
 
 const createWindow = async () => {
@@ -40,8 +44,9 @@ const createWindow = async () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
+  
   let dialogWindow
-  ipcMain.handle('openDialogWindow', (e, sources) => {
+  ipcMain.handle('openDialog', (e, sources) => {
     dialogWindow = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
     dialogWindow.loadFile(path.join(__dirname, '../public/index.html'));
     dialogWindow.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
@@ -67,6 +72,31 @@ const createWindow = async () => {
   })
   let reqUrl = ""
   ipcMain.handle('login', async () => {
+    try {
+      autoUpdater.setFeedURL("https://ryoha000.github.io/portablerg-electron");
+      autoUpdater.checkForUpdates()
+      autoUpdater.on("update-downloaded", () => {
+        index = dialog.showMessageBox({
+          message: "アップデート",
+          detail: "アップデートがあったため自動でアップデートしました。",
+        });
+        autoUpdater.quitAndInstall();
+      });
+      autoUpdater.on("update-not-available", () => {
+        dialog.showMessageBox({
+          message: "アップデートはありません",
+          buttons: ["OK"]
+        });
+      });
+      autoUpdater.on("error", () => {
+        dialog.showMessageBox({
+          message: "アップデートエラーが起きました",
+          buttons: ["OK"]
+        });
+      });
+    } catch (e) {
+      console.error(e)
+    }
     if (reqUrl) {
       return reqUrl
     }
@@ -181,10 +211,7 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  createWindow()
-  setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 1000 * 60 * 60)
-});
+app.on('ready', createWindow);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
