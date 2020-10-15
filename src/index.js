@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, remote, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const http = require("http");
 const { useMouse } = require('./useMouse')
@@ -40,29 +40,29 @@ const createWindow = async () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
-  let dialog
-  ipcMain.handle('openDialog', (e, sources) => {
-    dialog = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
-    dialog.loadFile(path.join(__dirname, '../public/index.html'));
-    dialog.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
-    dialog.webContents.session.setPermissionCheckHandler(async (webContents, permission, details) => {
+  let dialogWindow
+  ipcMain.handle('openDialogWindow', (e, sources) => {
+    dialogWindow = new BrowserWindow({ parent: mainWindow, modal: true, webPreferences: { nodeIntegration: true }, useContentSize: true })
+    dialogWindow.loadFile(path.join(__dirname, '../public/index.html'));
+    dialogWindow.webContents.session.setPreloads([path.join(__dirname, 'preload-get-display-media-polyfill.js')])
+    dialogWindow.webContents.session.setPermissionCheckHandler(async (webContents, permission, details) => {
       return true
     })
-    dialog.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
+    dialogWindow.webContents.session.setPermissionRequestHandler(async (webContents, permission, callback, details) => {
       callback(true)
     })
-    dialog.webContents.openDevTools()
+    dialogWindow.webContents.openDevTools()
     setTimeout(() => {
-      dialog.send('sources', sources)
+      dialogWindow.send('sources', sources)
     }, 500);
-    dialog.show('ready-to-show', () => dialog.show())
+    dialogWindow.show('ready-to-show', () => dialogWindow.show())
     return
   })
   let windowName = ""
   ipcMain.handle('decideWindow', (e, id, name) => {
     windowName = name
     mainWindow.webContents.send('id', id, name)
-    dialog.hide()
+    dialogWindow.hide()
     return
   })
   let reqUrl = ""
@@ -181,7 +181,10 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow()
+  setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 1000 * 60 * 60)
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
