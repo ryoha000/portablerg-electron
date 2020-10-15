@@ -73,7 +73,7 @@ const createWindow = async () => {
   let reqUrl = ""
   ipcMain.handle('login', async () => {
     try {
-      autoUpdater.setFeedURL("https://ryoha000.github.io/portablerg-electron");
+      autoUpdater.setFeedURL("https://github.com/ryoha000/portablerg-electron/releases/latest/download");
       autoUpdater.checkForUpdates()
       autoUpdater.on("update-downloaded", () => {
         index = dialog.showMessageBox({
@@ -95,6 +95,12 @@ const createWindow = async () => {
         });
       });
     } catch (e) {
+      try {
+        dialog.showErrorBox({
+          title: "update",
+          content: e.toString()
+        });
+      } catch {}
       console.error(e)
     }
     if (reqUrl) {
