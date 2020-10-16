@@ -15,5 +15,5 @@ export const store = {
 
   chunks: writable<Blob[]>([]),
   recorder: writable<MediaRecorder | null>(null),
-  me: writable("")
+  me: writable("originala")
 }

@@ -327,8 +327,6 @@ const useWebRTC = () => {
       if(peerConnection.iceConnectionState !== 'closed'){
         peerConnection.close();
         store.peerConnection.set(null)
-        store.dataChannel.set(null)
-        store.movieChannel.set(null)
         store.negotiationneededCounter.set(0)
         store.remoteVideoStream.set(null)
         store.isSetAnswer.set(false)
