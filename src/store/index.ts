@@ -12,5 +12,7 @@ export const store = {
 
   candidates: writable<{ id: string, name: string, url: string }[]>([]),
 
+  chunks: writable<Blob[]>([]),
+  recorder: writable<MediaRecorder | null>(null),
   me: writable("")
 }

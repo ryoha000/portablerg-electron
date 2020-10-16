@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyDown, keyUp, getWindowRect, mouseMoveClick, mouseMoveDragStart, mouseMoveDragging } from '../renderLogic'
 import { store } from '../store';
-import { sendWSMessageWithID } from './utils';
+import { getRecordData, playVideo, segmentation, sendWSMessageWithID, sleep } from './utils';
 
 const useWebRTC = () => {
   let id: string = ""
@@ -122,25 +122,28 @@ const useWebRTC = () => {
     playVideo(localVideo, stream)
   }
 
-  // Videoの再生を開始する
-  async function playVideo(element : HTMLMediaElement, stream: MediaStream) {
-    if (element.srcObject) {
-      return
-    }
-    element.srcObject = stream;
-    try {
-      await element.play();
-    } catch(error) {
-      console.error('error auto play:' + error);
-    }
-  }
-
   // WebRTCを利用する準備をする
   function prepareNewConnection(isOffer: boolean) {
     const pc_config = {"iceServers":[ {"urls":"stun:stun.webrtc.ecl.ntt.com:3478"} ]};
     const peer = new RTCPeerConnection(pc_config);
 
-    const dataChannel = peer.createDataChannel('mouseMove')
+    let isSendingMovie = false
+    const dataChannel = peer.createDataChannel('dataChannel')
+    dataChannel.binaryType = 'arraybuffer'
+    dataChannel.onopen = () => {
+      console.log(dataChannel.readyState)
+      console.log('connect datachannel')
+    }
+    const movieChannel = peer.createDataChannel('movieChannel')
+    movieChannel.onerror = (e) => console.error(e)
+    movieChannel.onclose = (e) => {
+      console.log('movie channel closed')
+      console.log(e)
+    }
+    movieChannel.onopen = () => {
+      console.log(movieChannel.readyState)
+      console.log('connect movie channel')
+    }
     dataChannel.onmessage = async (event) => {
       const message = JSON.parse(event.data);
       switch (message.type) {
@@ -198,6 +201,25 @@ const useWebRTC = () => {
         case 'moveDragging': {
           const point = message.point
           mouseMoveDragging(point)
+          break
+        }
+        case 'movie': {
+          const arraybuffer = await getRecordData()
+          if (arraybuffer && !isSendingMovie) {
+            isSendingMovie = true
+            const segments = segmentation(arraybuffer, 1000)
+            console.log(segments.length)
+            const start = performance.now()
+            for (let i = 0; i < segments.length; i++) {
+              if (i % 50 === 49) await sleep(20)
+              movieChannel.send(segments[i])
+            }
+            console.log(`${(performance.now() - start) / 1000}s`)
+            movieChannel.send('end')
+            isSendingMovie = false
+          } else {
+            console.error('record data is not exist OR sendingMovie')
+          }
           break
         }
         case 'error': {
@@ -342,22 +364,11 @@ const useWebRTC = () => {
     console.log('peerConnection is closed.');
   }
 
-  function playRemoteVideo(remoteVideo: HTMLMediaElement) {
-    const remoteVideoStream: MediaStream | null = get(store.remoteVideoStream)
-    if (remoteVideoStream) {
-      playVideo(remoteVideo, remoteVideoStream)
-    } else {
-      alert('not set remote video stream')
-    }
-  }
-
   return {
     setupWS,
     setStreamByID,
     hangUp,
-    connect,
-    playRemoteVideo,
-    playVideo
+    connect
   }
 }
 

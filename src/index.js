@@ -3,10 +3,12 @@ const path = require('path');
 const http = require("http");
 const { useMouse } = require('./useMouse')
 const { useKeyboard } = require('./useKeyboard');
+const { spawn } = require('child_process')
 
 const { U , DStruct } = require('win32-api')
 const ref = require("ref-napi")
 const StructDi = require('ref-struct-di')
+const Struct = StructDi(ref)
 
 const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
 
@@ -110,7 +112,6 @@ const createWindow = async () => {
       || typeof hWnd === 'bigint' && hWnd > 0
       || typeof hWnd === 'string' && hWnd.length > 0
     ) {
-      const Struct = StructDi(ref)
       const rect = new Struct(DStruct.RECT)()
       const res = user32.GetWindowRect(hWnd, rect.ref())
       if (res) {
