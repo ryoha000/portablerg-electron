@@ -17,7 +17,9 @@ export const sendWSMessageWithID = (
   }
 }
 
-const CHUNK_BEHINDE = 50
+const CHUNK_BEHINDE = 1000
+const MAX_RECORD_MINUTES = 2
+const MAX_CHUNK_LENGTH = MAX_RECORD_MINUTES * 60 * 1000 / CHUNK_BEHINDE
 
 export const playVideo = async (element : HTMLMediaElement, stream: MediaStream) => {
   if (element.srcObject) {
@@ -44,16 +46,32 @@ const startRecord = (stream: MediaStream) => {
   }
   try {
     const recorder = new MediaRecorder(stream, option)
-    recorder.ondataavailable = async (e) => {
-      const mc: RTCDataChannel | null = get(store.movieChannel)
-      if (mc) {
-        const arrayBuffer = await e.data.arrayBuffer()
-        mc.send(arrayBuffer)
-      }
+    recorder.ondataavailable = (e) => {
+      store.chunks.update(v => {
+        v.push(e.data)
+        if (v.length > MAX_CHUNK_LENGTH) {
+          v.shift()
+        }
+        return v
+      })
     }
     recorder.onerror = (e) => { console.error(e) }
     recorder.start(CHUNK_BEHINDE)
     console.log('start recording')
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+export const getRecordData = async () => {
+  try {
+    const chunks: Blob[] = get(store.chunks)
+    console.log(`${chunks.length}秒`)
+    const allChunks = new Blob(chunks)
+    console.log(allChunks)
+    const arrbuf = await allChunks.arrayBuffer()
+    console.log(arrbuf)
+    return arrbuf
   } catch (e) {
     console.error(e)
   }
