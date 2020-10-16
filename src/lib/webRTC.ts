@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { mouseMove, mouseScroll, mouseClick, mouseDragStart, mouseDragEnd, mouseDragging, keyDown, keyUp, getWindowRect, mouseMoveClick, mouseMoveDragStart, mouseMoveDragging } from '../renderLogic'
 import { store } from '../store';
-import { getRecordData, playVideo, segmentation, sendWSMessageWithID, sleep } from './utils';
+import { playVideo, sendWSMessageWithID } from './utils';
 
 const useWebRTC = () => {
   let id: string = ""
@@ -131,18 +131,8 @@ const useWebRTC = () => {
     const dataChannel = peer.createDataChannel('dataChannel')
     dataChannel.binaryType = 'arraybuffer'
     dataChannel.onopen = () => {
-      console.log(dataChannel.readyState)
+      store.dataChannel.set(dataChannel)
       console.log('connect datachannel')
-    }
-    const movieChannel = peer.createDataChannel('movieChannel')
-    movieChannel.onerror = (e) => console.error(e)
-    movieChannel.onclose = (e) => {
-      console.log('movie channel closed')
-      console.log(e)
-    }
-    movieChannel.onopen = () => {
-      console.log(movieChannel.readyState)
-      console.log('connect movie channel')
     }
     dataChannel.onmessage = async (event) => {
       const message = JSON.parse(event.data);
@@ -182,9 +172,8 @@ const useWebRTC = () => {
         case 'tabletMode': {
           const rect = await getWindowRect()
           console.log(rect)
-          const dc: RTCDataChannel | null = get(store.dataChannel)
-          if (dc) {
-            dc.send(JSON.stringify({ type: 'windowRect', rect: rect }))
+          if (dataChannel) {
+            dataChannel.send(JSON.stringify({ type: 'windowRect', rect: rect }))
           }
           break
         }
@@ -203,25 +192,6 @@ const useWebRTC = () => {
           mouseMoveDragging(point)
           break
         }
-        case 'movie': {
-          const arraybuffer = await getRecordData()
-          if (arraybuffer && !isSendingMovie) {
-            isSendingMovie = true
-            const segments = segmentation(arraybuffer, 1000)
-            console.log(segments.length)
-            const start = performance.now()
-            for (let i = 0; i < segments.length; i++) {
-              if (i % 50 === 49) await sleep(20)
-              movieChannel.send(segments[i])
-            }
-            console.log(`${(performance.now() - start) / 1000}s`)
-            movieChannel.send('end')
-            isSendingMovie = false
-          } else {
-            console.error('record data is not exist OR sendingMovie')
-          }
-          break
-        }
         case 'error': {
           console.error(message.data)
           break
@@ -234,7 +204,17 @@ const useWebRTC = () => {
     };
 
     dataChannel.onerror = (e) => { console.error(e) }
-    store.dataChannel.set(dataChannel)
+
+    const movieChannel = peer.createDataChannel('movieChannel')
+    movieChannel.onerror = (e) => console.error(e)
+    movieChannel.onclose = (e) => {
+      console.log('movie channel closed')
+      console.log(e)
+    }
+    movieChannel.onopen = () => {
+      store.movieChannel.set(movieChannel)
+      console.log('connect movie channel')
+    }
 
     // ICE Candidateを収集したときのイベント
     peer.onicecandidate = evt => {
