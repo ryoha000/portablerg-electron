@@ -42,10 +42,11 @@ const startRecord = (stream: MediaStream) => {
     prevRecorder.stop()
   }
   const option = {
-    mimeType: 'video/webm;codecs=h264,opus'
+    mimeType: 'video/webm;codecs=h264'
   }
   try {
     const recorder = new MediaRecorder(stream, option)
+    store.recorder.set(recorder)
     recorder.ondataavailable = (e) => {
       store.chunks.update(v => {
         v.push(e.data)
@@ -70,7 +71,6 @@ export const getRecordData = async () => {
     const allChunks = new Blob(chunks)
     console.log(allChunks)
     const arrbuf = await allChunks.arrayBuffer()
-    console.log(arrbuf)
     return arrbuf
   } catch (e) {
     console.error(e)
