@@ -75,6 +75,11 @@
 			display: flex;
 			flex-wrap: wrap;
 		}
+		.description {
+			margin-top: 1rem;
+			display: flex;
+			flex-wrap: wrap;
+		}
 	</style>
 	<div class="desktopContainer">
 		<ColumnTemplate label="Windowの選択">
@@ -85,5 +90,6 @@
 				<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 			</div>
 		</ColumnTemplate>
+		<div class="description"><div>操作したい端末で</div><div>portablerg.ryoha.moe</div><div>を開いてください。</div></div>
 	</div>
 </div>
