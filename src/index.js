@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, autoUpdater, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, autoUpdater, dialog, screen } = require('electron');
 const path = require('path');
 const http = require("http");
 const { useMouse } = require('./useMouse')
@@ -104,7 +104,28 @@ const createWindow = async () => {
     })
   })
   ipcMain.handle('getWindowRect', (e) => {
-
+    if (windowName.startsWith('Screen')) {
+      const primaryDisplay = screen.getPrimaryDisplay()
+      if (windowName.includes('1')) {
+        return {
+          top: primaryDisplay.bounds.y,
+          left: primaryDisplay.bounds.x,
+          right: primaryDisplay.bounds.width + primaryDisplay.bounds.x,
+          bottom: primaryDisplay.bounds.height + primaryDisplay.bounds.y
+        }
+      } else {
+        for (const display of screen.getAllDisplays()) {
+          if (display.id !== primaryDisplay.id) {
+            return {
+              top: display.bounds.y,
+              left: display.bounds.x,
+              right: display.bounds.width + display.bounds.x,
+              bottom: display.bounds.height + display.bounds.y
+            }
+          }
+        }
+      }
+    }
     const lpszWindow = Buffer.from(windowName, 'ucs2')
     const hWnd = user32.FindWindowExW(0, 0, null, lpszWindow)
 
