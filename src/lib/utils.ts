@@ -18,7 +18,7 @@ export const sendWSMessageWithID = (
 }
 
 const CHUNK_BEHINDE = 1000
-const MAX_RECORD_MINUTES = 2
+const MAX_RECORD_MINUTES = 3
 const MAX_CHUNK_LENGTH = MAX_RECORD_MINUTES * 60 * 1000 / CHUNK_BEHINDE
 
 export const playVideo = async (element : HTMLMediaElement, stream: MediaStream) => {
@@ -28,30 +28,45 @@ export const playVideo = async (element : HTMLMediaElement, stream: MediaStream)
   element.srcObject = stream;
   try {
     element.onloadeddata = async (e) => {
-      await element.play()
-      startRecord(stream)
+      await element.play();
+      (get(store.recorders) as MediaRecorder[]).forEach(rec => rec.stop());
+      store.recorders.update(v => {
+        v.forEach(rec => rec.stop())
+        return v
+      });
+      store.chunks.update(() => [])
+      startRecord(stream, 0)
     }
   } catch(error) {
     console.error('error auto play:' + error);
   }
 }
 
-const startRecord = (stream: MediaStream) => {
-  const prevRecorder: MediaRecorder | null = get(store.recorder)
-  if (prevRecorder && prevRecorder.state === 'recording') {
-    prevRecorder.stop()
-  }
+const BUFFER_NUM = 3
+
+const startRecord = (stream: MediaStream, index: number) => {
+  store.chunks.update(v => {
+    v[index] = []
+    return v
+  })
   const option = {
-    mimeType: 'video/webm;codecs=h264'
+    mimeType: 'video/webm;codecs=h264,opus'
   }
   try {
     const recorder = new MediaRecorder(stream, option)
-    store.recorder.set(recorder)
+    store.recorders.update(v => {
+      v[index] = recorder
+      return v
+    })
+
     recorder.ondataavailable = (e) => {
       store.chunks.update(v => {
-        v.push(e.data)
-        if (v.length > MAX_CHUNK_LENGTH) {
-          v.shift()
+        v[index].push(e.data)
+        if (v[index].length === MAX_CHUNK_LENGTH / BUFFER_NUM) {
+          startRecord(stream, getNextIndex(index))
+        }
+        if (v[index].length === MAX_CHUNK_LENGTH) {
+          recorder.stop()
         }
         return v
       })
@@ -64,9 +79,17 @@ const startRecord = (stream: MediaStream) => {
   }
 }
 
+const getNextIndex = (nowIndex: number) => {
+  if (nowIndex === BUFFER_NUM - 1) {
+    return 0
+  }
+  return nowIndex + 1
+}
+
+// TODO
 export const getRecordData = async () => {
   try {
-    const chunks: Blob[] = get(store.chunks)
+    const chunks: Blob[] = getBiggerChunks()
     console.log(`${chunks.length}秒`)
     const allChunks = new Blob(chunks)
     console.log(allChunks)
@@ -75,6 +98,16 @@ export const getRecordData = async () => {
   } catch (e) {
     console.error(e)
   }
+}
+
+const getBiggerChunks = () => {
+  let res: Blob[] = []
+  for (const chunks of get(store.chunks) as Blob[][]) {
+    if (res.length < chunks.length) {
+      res = chunks
+    }
+  }
+  return res
 }
 
 export const segmentation = (arrayBuffer: ArrayBuffer, segmentSize: number) => {

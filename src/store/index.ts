@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store'
+import { writable, Writable } from 'svelte/store'
 
 export const store = {
   localStream: writable<null | MediaStream>(null),
@@ -12,7 +12,8 @@ export const store = {
 
   candidates: writable<{ id: string, name: string, url: string }[]>([]),
 
-  chunks: writable<Blob[]>([]),
-  recorder: writable<MediaRecorder | null>(null),
+  chunks: writable<Blob[][]>([]),
+  recorders: writable<MediaRecorder[]>([]),
+
   me: writable("")
 }
