@@ -31,8 +31,11 @@ module.exports.useMouse = () => {
 		robot.scrollMouse(dPoint.x, dPoint.y);
 		// scrollPoint = resPos
 	}
-	const click = (option = { button: 'left', double: false }) => {
-		robot.mouseClick(option.button, option.double)
+	const click = () => {
+		robot.mouseToggle('down', 'left')
+		setTimeout(() => {
+			robot.mouseToggle('up', 'left')
+		}, 20);
 	}
 	const dragEdge = (option = { down: 'down', button: 'left' }) => {
 		robot.mouseToggle(option.down, option.button)
@@ -50,7 +53,7 @@ module.exports.useMouse = () => {
 	}
 	const moveClick = (point) => {
 		robot.moveMouse(point.x, point.y)
-		robot.mouseClick('left', false)
+		click()
 	}
 	const moveDragStart = (point) => {
 		robot.moveMouse(point.x, point.y)
