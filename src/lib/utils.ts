@@ -31,7 +31,15 @@ export const playVideo = async (element : HTMLMediaElement, stream: MediaStream)
       await element.play();
       (get(store.recorders) as MediaRecorder[]).forEach(rec => rec.stop());
       store.recorders.update(v => {
-        v.forEach(rec => rec.stop())
+        v.forEach(rec => {
+          if (rec.state === 'recording') {
+            rec.stop()
+          } else {
+            setTimeout(() => {
+              rec.ondataavailable = () => rec.stop()
+            }, 500);
+          }
+        })
         return v
       });
       store.chunks.update(() => [])
@@ -92,7 +100,6 @@ export const getRecordData = async () => {
     const chunks: Blob[] = getBiggerChunks()
     console.log(`${chunks.length}秒`)
     const allChunks = new Blob(chunks)
-    console.log(allChunks)
     const arrbuf = await allChunks.arrayBuffer()
     return arrbuf
   } catch (e) {

@@ -3,14 +3,6 @@ const path = require('path');
 const http = require("http");
 const { useMouse } = require('./useMouse')
 const { useKeyboard } = require('./useKeyboard');
-const { spawn } = require('child_process')
-
-const { U , DStruct } = require('win32-api')
-const ref = require("ref-napi")
-const StructDi = require('ref-struct-di')
-const Struct = StructDi(ref)
-
-const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
 
 // Live Reload
 require('electron-reload')(__dirname, {
@@ -126,6 +118,13 @@ const createWindow = async () => {
         }
       }
     }
+
+    const { U , DStruct } = require('win32-api')
+    const ref = require("ref-napi")
+    const StructDi = require('ref-struct-di')
+    const Struct = StructDi(ref)
+
+    const user32 = U.load()  // load all apis defined in lib/{dll}/api from user32.dll
     const lpszWindow = Buffer.from(windowName, 'ucs2')
     const hWnd = user32.FindWindowExW(0, 0, null, lpszWindow)
 
@@ -142,7 +141,6 @@ const createWindow = async () => {
           right: rect.right,
           bottom: rect.bottom,
         }
-        console.log(resRect)
         return resRect
       }
     }

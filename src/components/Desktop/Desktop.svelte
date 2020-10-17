@@ -62,6 +62,10 @@
 		const sources = await useWindow()
 		await openDialog(sources)
 	}
+	const clickReset = () => {
+		name = ''
+		reset(localVideo)
+	}
 </script>
 
 
@@ -86,7 +90,7 @@
 			<video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 			<div>現在: {name ?? '未選択'}</div>
 			<div class="flexContainer">
-				<TextButton label="リセット" on:click="{() => reset(localVideo)}" color="rgb(255, 0, 0)" />
+				<TextButton label="リセット" on:click="{clickReset}" color="rgb(255, 0, 0)" />
 				<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 			</div>
 		</ColumnTemplate>
