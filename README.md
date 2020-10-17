@@ -1,23 +1,16 @@
-# Electron Forge + Svelte  Starter
+# portablerg
 
-Get up and running with 💪 Svelte & ⚡ Electron. 
+portablergはブラウザ上でwindow、またはscreen単位での遠隔PC操作を可能にするアプリケーションです。  
+このリポジトリはPCにインストールする必要があるWindows向けアプリケーションのみを含みます。  
+操作端末側で利用するWebアプリケーションは以下のリポジトリを参照してください。  
+https://github.com/ryoha000/portablerg-client
 
-## Usage
+このアプリケーションの起動画面です。  
+![demo](https://raw.githubusercontent.com/ryoha000/portablerg-electron/master/public/demo.png "demo")
 
+## development
+This repository needs `node-gyp`  
 ```
-git clone https://github.com/codediodeio/electron-forge-svelte.git my-app
-cd my-app
-
-npm install
-npm start
+npm i
+npm run start
 ```
-
-![svelte electron](https://firebasestorage.googleapis.com/v0/b/fireship-app.appspot.com/o/assets%2Felectron-svelte-hello.png?alt=media&token=0d3ecb24-3024-4358-ac26-7676b3e60fa1)
-
-## Notes
-
-- src/index.js - Main electron process. 
-- src/svelte.js - Svelte app entrypoint. 
-
-Setup [Electron with Svelte](https://fireship.io/snippets/svelte-electron-setup) from scratch. 
-Build cool projects with [Electron](https://fireship.io/tags/electron). 
