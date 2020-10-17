@@ -77,7 +77,6 @@ import { get } from "svelte/store";
 		}
 	</style>
 	<div class="desktopContainer">
-		<!-- <div>id: {id}</div> -->
 		<ColumnTemplate label="Windowの選択">
 			<video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 			<div>現在: {name ?? '未選択'}</div>
@@ -86,6 +85,5 @@ import { get } from "svelte/store";
 				<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 			</div>
 		</ColumnTemplate>
-		<button on:click="{getWindowRect}">getWindowRect</button>
 	</div>
 </div>
