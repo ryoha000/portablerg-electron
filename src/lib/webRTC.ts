@@ -364,11 +364,18 @@ const useWebRTC = () => {
     console.log('peerConnection is closed.');
   }
 
+  const reset = (ele: HTMLMediaElement) => {
+    hangUp()
+    store.localStream.set(null)
+    ele.srcObject = null
+  }
+
   return {
     setupWS,
     setStreamByID,
     hangUp,
-    connect
+    connect,
+    reset,
   }
 }
 

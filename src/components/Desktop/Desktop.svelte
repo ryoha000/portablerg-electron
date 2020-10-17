@@ -3,11 +3,10 @@
 	import ColumnTemplate from './ColumnTemplate.svelte'
 	import useWebRTC from '../../lib/webRTC'
 	import TextButton from '../UI/TextButton.svelte'
-	import { openDialog, listenID, mouseDispose, getWindowRect } from '../../renderLogic'
-	import { mouseInit } from '../../renderLogic'
+	import { openDialog, listenID, mouseDispose, mouseInit } from '../../renderLogic'
 	import useWindow from "./useWindow";
 	import { store } from "../../store";
-import { get } from "svelte/store";
+	import { get } from "svelte/store";
 
 	let localVideo: HTMLVideoElement
 	// let id: string
@@ -19,7 +18,8 @@ import { get } from "svelte/store";
 	const {
 		setupWS,
 		setStreamByID,
-		connect
+		connect,
+		reset
 	} = useWebRTC()
 
   store.ws.subscribe(v => {
@@ -81,7 +81,7 @@ import { get } from "svelte/store";
 			<video bind:this="{localVideo}" autoplay muted="{true}" style="width: 160px; height: 120px; border: 1px solid black;"></video>
 			<div>現在: {name ?? '未選択'}</div>
 			<div class="flexContainer">
-				<TextButton label="リセット" color="rgb(255, 0, 0)" />
+				<TextButton label="リセット" on:click="{() => reset(localVideo)}" color="rgb(255, 0, 0)" />
 				<TextButton label="変更" on:click="{select}" color="rgb(0, 80, 160)" />
 			</div>
 		</ColumnTemplate>
