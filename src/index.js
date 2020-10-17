@@ -24,7 +24,7 @@ const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     // RELEASE: to 400
-    width: 800,
+    width: 400,
     height: 600,
     webPreferences: {
       nodeIntegration: true
@@ -39,13 +39,13 @@ const createWindow = async () => {
     callback(true)
   })
   // RELEASE: in
-  // mainWindow.removeMenu()
+  mainWindow.removeMenu()
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, '../public/index.html'));
 
   // RELEASE: out
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   let dialogWindow
   ipcMain.handle('openDialog', (e, sources) => {
