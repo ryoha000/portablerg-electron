@@ -42,8 +42,22 @@ export const playVideo = async (element : HTMLMediaElement, stream: MediaStream)
         })
         return v
       });
-      store.chunks.update(() => [])
-      startRecord(stream, 0)
+      store.chunks.update(() => [[], [], []])
+      const option = {
+        mimeType: 'video/webm;codecs=h264,opus'
+      }
+      for (let i = 0; i < BUFFER_NUM; i++) {
+        const recorder = new MediaRecorder(stream, option)
+        store.recorders.update(v => {
+          v[i] = recorder
+          return v
+        })
+      }
+      for (let i = 0; i < BUFFER_NUM; i++) {
+        setTimeout(() => {
+          startRecord(i)
+        }, MAX_RECORD_MINUTES * 60 * 1000 / BUFFER_NUM);
+      }
     }
   } catch(error) {
     console.error('error auto play:' + error);
@@ -52,26 +66,21 @@ export const playVideo = async (element : HTMLMediaElement, stream: MediaStream)
 
 const BUFFER_NUM = 3
 
-const startRecord = (stream: MediaStream, index: number) => {
-  store.chunks.update(v => {
-    v[index] = []
-    return v
-  })
-  const option = {
-    mimeType: 'video/webm;codecs=h264,opus'
-  }
+const startRecord = (index: number) => {
   try {
-    const recorder = new MediaRecorder(stream, option)
-    store.recorders.update(v => {
-      v[index] = recorder
+    const recorder = get(store.recorders)[index]
+    try {
+      recorder.stop()
+    } catch (e) { console.error(e) }
+    store.chunks.update(v => {
+      v[index] = []
       return v
     })
-
     recorder.ondataavailable = (e) => {
       store.chunks.update(v => {
         v[index].push(e.data)
         if (v[index].length === MAX_CHUNK_LENGTH / BUFFER_NUM) {
-          startRecord(stream, getNextIndex(index))
+          startRecord(getNextIndex(index))
         }
         if (v[index].length === MAX_CHUNK_LENGTH) {
           recorder.stop()
