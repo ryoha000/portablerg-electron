@@ -7,10 +7,6 @@
     "url": "git+https://github.com/ryoha000/portablerg-electron.git"
   },
   "author": "ryoha",
-  "build": {
-    "appId": "portablerg",
-    "icon": "public/favicon.png"
-  },
   "description": "simple remote desktop for GAME",
   "scripts": {
     "start": "concurrently \"npm:svelte-dev\" \"electron-forge start\"",
@@ -19,7 +15,7 @@
     "svelte-build": "rollup -c",
     "svelte-dev": "rollup -c -w",
     "svelte-start": "sirv public",
-    "build": "electron-builder"
+    "build": "node build.js"
   },
   "dependencies": {
     "electron-reload": "^1.5.0",
