@@ -19,11 +19,11 @@ npm run start
 
 ## privacy policy
 ### Japanese
-portablergはユーザーやユーザーに関係する情報の収集をしません。
-portablergはユーザーのキー入力の収集をしません。
+portablergはユーザーやユーザーに関係する情報の収集をしません。\
+portablergはユーザーのキー入力の収集をしません。\
 portablergは自身で開いたファイルの情報を収集しません。
 
 ### English
-portablerg do not collect any personal information or privacy-related information about user.
-portablerg do not collect information of keyboard typing by user.
+portablerg do not collect any personal information or privacy-related information about user.\
+portablerg do not collect information of keyboard typing by user.\
 portablerg do not collect the information of files opened by portablerg.
