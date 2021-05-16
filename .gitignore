@@ -90,4 +90,5 @@ out/
 
 # build
 public/build
+dist/
 public/*.json

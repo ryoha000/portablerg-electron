@@ -1,64 +1,25 @@
 {
   "name": "portablerg",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ryoha000/portablerg-electron.git"
   },
   "author": "ryoha",
+  "build": {
+    "appId": "portablerg",
+    "icon": "public/favicon.png"
+  },
   "description": "simple remote desktop for GAME",
   "scripts": {
     "start": "concurrently \"npm:svelte-dev\" \"electron-forge start\"",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
     "validate": "npx svelte-check",
     "svelte-build": "rollup -c",
     "svelte-dev": "rollup -c -w",
-    "svelte-start": "sirv public"
-  },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "icon": "public/icon.ico"
-      },
-      "publishers": [
-        {
-          "name": "@electron-forge/publisher-github",
-          "config": {
-            "repository": {
-              "owner": "ryoha000",
-              "name": "portablerg-electron"
-            },
-            "prerelease": true
-          }
-        }
-      ],
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "portablerg"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ]
-    }
+    "svelte-start": "sirv public",
+    "build": "electron-builder"
   },
   "dependencies": {
     "electron-reload": "^1.5.0",
@@ -80,6 +41,7 @@
     "@tsconfig/svelte": "^1.0.10",
     "concurrently": "^6.1.0",
     "electron": "11.2.1",
+    "electron-builder": "^22.10.5",
     "electron-rebuild": "^2.3.5",
     "rollup": "^2.47.0",
     "rollup-plugin-css-only": "^3.1.0",
