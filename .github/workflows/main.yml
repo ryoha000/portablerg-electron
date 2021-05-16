@@ -32,7 +32,7 @@ jobs:
       - run: sudo apt-get install libxtst-dev libpng++-dev
       - run: sudo apt-get install build-essential
       - run: npm ci
-      - run: npm run package
+      - run: npm run build
   svelte-build:
     name: Svelte-Build
     runs-on: ubuntu-latest
