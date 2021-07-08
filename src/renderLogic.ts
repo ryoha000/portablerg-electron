@@ -1,5 +1,3 @@
-import type { Setting, URI } from './@types/Original'
-
 let ipc: any
 try {
   const { ipcRenderer } = window.require('electron');
