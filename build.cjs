@@ -8,7 +8,7 @@ const identityName = process.env.IDENTITY_NAME;
 const applicationId = process.env.APPLICATION_ID;
 const publisherDisplayName = process.env.PUBLISHER_DISPLAY_NAME;
 const publisher = process.env.PUBLISHER;
-const languages = ["JA-JP", "EN-US"];
+const languages = ["JA-JP"];
 
 if (!(identityName && applicationId && publisherDisplayName && publisher)) {
   console.error(
