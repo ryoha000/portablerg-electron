@@ -1,4 +1,4 @@
-const robot = require("robotjs");
+const robot = require('./robotjs.node')
 
 module.exports.useKeyboard = () => {
   const keyTap = (type) => {

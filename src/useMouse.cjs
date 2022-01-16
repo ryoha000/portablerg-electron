@@ -1,4 +1,4 @@
-const robot = require('robotjs')
+const robot = require('./robotjs.node')
 
 // export const a = (dPoint) => {
 // 	robot.scrollMouse(dPoint.x, dPoint.y)
