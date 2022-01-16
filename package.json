@@ -20,12 +20,11 @@
   },
   "dependencies": {
     "electron-reload": "^1.5.0",
-    "robotjs": "git+https://github.com/octalmage/robotjs.git",
     "sirv-cli": "^1.0.11",
     "win32-api": "^9.6.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-typescript": "^8.2.1",
     "@tsconfig/svelte": "^1.0.10",
